@@ -7,7 +7,7 @@
 <meta name="firebase-project-id" content="PASTE_PROJECT_ID_HERE">
 <!-- ============================================================================ -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hhQ6EcrjMa9ZNHbsm0Hk57qFvdsvfdMNtcWSmdDlVOc=' https://cdnjs.cloudflare.com; style-src 'unsafe-inline' https://cdnjs.cloudflare.com; img-src data: https://tile.openstreetmap.org https://cdnjs.cloudflare.com; connect-src https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://nominatim.openstreetmap.org; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3N1b4H6fq4LnB24S66xT8w79wQ73KACjU9eVXL6EUbs=' https://cdnjs.cloudflare.com; style-src 'unsafe-inline' https://cdnjs.cloudflare.com; img-src data: https://tile.openstreetmap.org https://cdnjs.cloudflare.com; connect-src https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://nominatim.openstreetmap.org; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -376,6 +376,8 @@ const TOKEN_BASE = meta('pm-token-base') || 'https://securetoken.googleapis.com'
 const FS_HOST = meta('pm-fs-base') || 'https://firestore.googleapis.com';
 const GEO_BASE = meta('pm-geo-base') || 'https://nominatim.openstreetmap.org';
 const DEFAULT_CENTER = [47.4979, 19.0402];
+// Starter list of known urbex spots (data/urbex.json), filled in by build.py.
+const URBEX_SPOTS = [{"name": "Hajmáskér Barracks", "address": "Tábori út 14, Hajmáskér", "note": "Huge Austro-Hungarian army barracks, later Soviet, now decaying. Visible from the main road on the east side of town. Ruins are unstable: watch your step. Source: https://atlasobscura.com/places/hajmasker-barracks", "lat": 47.147994, "lng": 18.026605}, {"name": "Istvántelek Train Yard (Red Star Train Graveyard)", "address": "Istvántelek, Budapest (pin = entrance gate)", "note": "Early-1900s railway repair yard with 100+ rusting locomotives and carriages. Active railway site with guards and dogs: no public access without permission. Source: https://atlasobscura.com/places/istvantelek-train-yard", "lat": 47.553361, "lng": 19.103056}, {"name": "Lipótmező Asylum (OPNI)", "address": "Hűvösvölgyi út 116, Budapest", "note": "Former National Institute of Psychiatry and Neurology, closed in 2007 and left to decay. Closed to the public; a renovation into a school is planned. Occasional guided tours. Source: https://audiala.com/en/hungary/budapest/national-institute-of-psychiatry-and-neurology", "lat": 47.5317032, "lng": 18.9737849}, {"name": "Józsefváros Railway Station", "address": "Fiumei út, Budapest VIII.", "note": "Historic station closed to passengers in 2005. Not open to the public; the exterior can be seen and photographed. Redevelopment of the area is planned. Source: https://audiala.com/en/hungary/budapest/jozsefvaros-railway-station", "lat": 47.4908, "lng": 19.0911}, {"name": "Szentkirályszabadja Soviet Airfield & Ghost Town", "address": "Szentkirályszabadja, near Veszprém (pin = airfield)", "note": "Former Soviet air base; the abandoned 1960s housing estate (\"Hungarian Chernobyl\") is next to the airfield, reached by an unmarked road north of the village. Broken glass, collapsing buildings. Source: https://atlasobscura.com/places/szentkiralyszabadja-ghost-town", "lat": 47.0779, "lng": 17.9684}, {"name": "Kunmadaras Soviet Air Base", "address": "Kunmadaras", "note": "Largest Soviet air base in Hungary (from 1956 until 1991), now officially closed and left to deteriorate. The runway is sometimes used for drag racing and light aircraft. Source: https://wikiwand.com/hu/articles/Kunmadarasi_rep%C3%BCl%C5%91t%C3%A9r", "lat": 47.3908, "lng": 20.785}, {"name": "Taszár Air Base", "address": "Taszár, near Kaposvár", "note": "Former Hungarian / NATO air base, mothballed in 2001. Privately owned since being sold off. Source: https://en.wikipedia.org/wiki/Tasz%C3%A1r_Air_Base", "lat": 46.39333, "lng": 17.91833}, {"name": "Kalocsa-Foktő Airfield", "address": "Foktő, near Kalocsa", "note": "Built with forced labour from 1951, Soviet base 1956-1990, largely abandoned. A local aero club still uses the southern end of the runway. Source: https://en.wikipedia.org/wiki/Kalocsa_Airfield", "lat": 46.55, "lng": 18.94028}, {"name": "Tököl Air Base", "address": "Tököl", "note": "Former Soviet air base, now largely deserted; part of the site is used by civilians and small aircraft. Source: https://www.forgottenairfields.com/airfield-teokeol-1074.html", "lat": 47.345278, "lng": 18.981111}, {"name": "Kecskemét-Kadafalva Soviet Helicopter Base", "address": "Kadafalva, Kecskemét", "note": "Closed former Soviet helicopter base. Check the current state before going; parts may be farmland or private. Source: https://mil-airfields.de/hu/list.htm", "lat": 46.879444, "lng": 19.616944}, {"name": "Székesfehérvár-Sóstó Soviet Airfield", "address": "Sóstó, Székesfehérvár", "note": "Closed former Soviet airfield. Check the current state before going; parts may be reused or private. Source: https://mil-airfields.de/hu/list.htm", "lat": 47.159722, "lng": 18.417778}, {"name": "BARS-504 Soviet Radio Base (Középső-Hajag)", "address": "Középső-Hajag, Bakony, near Veszprém", "note": "Ruins of a secret Soviet military radio station (1983-1987) in the forest. The antennas are gone; concrete ruins remain. Source: https://www.komoot.com/highlight/7377538", "lat": 47.18854, "lng": 17.739968}, {"name": "Gyöngyös Synagogue", "address": "Vármegye út, Gyöngyös", "note": "1930 synagogue by Lipót Baumhorn, used as a store after 1945 and badly dilapidated. Conversion to a cultural centre has been announced, so it may be under works. Source: https://en.wikipedia.org/wiki/Gy%C3%B6ngy%C3%B6s_Synagogue", "lat": 47.7835, "lng": 19.92249}, {"name": "Pripyat (Chernobyl Zone)", "address": "Pripyat, Kyiv Oblast, Ukraine", "note": "Ghost city evacuated after the 1986 Chernobyl disaster. Inside the Exclusion Zone: guided tours only. Check the current situation before any travel. Source: https://en.wikipedia.org/wiki/Pripyat", "lat": 51.40472, "lng": 30.05694}, {"name": "Beelitz-Heilstätten", "address": "Beelitz, Brandenburg, Germany", "note": "Huge former sanatorium and military hospital; the surgery, psychiatric ward and rifle range have been empty since 1994. Ticketed treetop walk; many buildings gated. Source: https://wiki.riteme.site/wiki/Beelitz-Heilst%C3%A4tten", "lat": 52.26028, "lng": 12.925}, {"name": "Buzludzha Monument", "address": "Buzludzha peak, near Kazanlak, Bulgaria (approx. pin)", "note": "Flying-saucer communist party monument on a mountaintop. Closed to the public because the structure is hazardous; preservation work since 2019. Pin is approximate (about 1 km). Source: https://en.wikipedia.org/wiki/Buzludzha_monument", "lat": 42.733, "lng": 25.383}, {"name": "Teufelsberg Listening Station", "address": "Teufelsberg, Berlin, Germany", "note": "Former Cold War US/British spy station on an artificial hill. Fenced and privately managed; entry fee. Source: https://en.wikipedia.org/wiki/Teufelsberg", "lat": 52.4975, "lng": 13.24111}, {"name": "Craco Ghost Town", "address": "Craco, Basilicata, Italy", "note": "Medieval hilltop town fully abandoned after the 1980 Irpinia earthquake; a well-known filming location. Source: https://en.wikipedia.org/wiki/Craco", "lat": 40.37861, "lng": 16.44}, {"name": "Haludovo Palace Hotel", "address": "Malinska, Krk, Croatia", "note": "Luxury 1970s resort once funded by Penthouse; empty and badly deteriorated since 2002. Source: https://en.wikipedia.org/wiki/Haludovo_Palace_Hotel", "lat": 45.13111, "lng": 14.52778}, {"name": "Zofiówka Sanatorium", "address": "Otwock, Poland", "note": "Former Jewish psychiatric sanatorium in the forest, closed in the 1990s and abandoned. Source: https://en.wikipedia.org/wiki/Zofi%C3%B3wka_Sanatorium", "lat": 52.114192, "lng": 21.289569}, {"name": "Brestovac Sanatorium", "address": "Medvednica (Sljeme), Zagreb, Croatia", "note": "Abandoned tuberculosis sanatorium at 840 m in Medvednica Nature Park. Source: https://www.komoot.com/highlight/4371156", "lat": 45.891446, "lng": 15.951864}, {"name": "Hashima Island (Gunkanjima)", "address": "Nagasaki, Japan", "note": "Abandoned coal-mining island. Only a small southern section is open, by tour boat; the residential areas are off-limits. Source: https://en.wikipedia.org/wiki/Hashima_Island", "lat": 32.62778, "lng": 129.73833}];
 
 // ---------------------------------------------------------------- errors / http
 class ApiError extends Error {
@@ -2145,6 +2147,41 @@ function toggleRow(label, sub, checked, onChange) {
     knob);
 }
 
+// ---------------------------------------------------------------- import starter spots (moderators)
+const normName = (n) => (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+/** Adds every starter spot that isn't on the map yet (same name, or a place within 100 m). */
+async function importSpots() {
+  if (!Repo.isMod) return;
+  const existing = await Repo.places();
+  const todo = URBEX_SPOTS.filter((s) => !existing.some((p) =>
+    normName(p.name) === normName(s.name) || distMeters([p.lat, p.lng], [s.lat, s.lng]) < 100));
+  if (!todo.length) { toast('All ' + URBEX_SPOTS.length + ' spots are already on the map.'); return; }
+  const ok = await confirmDialog('Import urbex spots?',
+    todo.length + ' known abandoned places will be added to the map under your name' +
+    (todo.length < URBEX_SPOTS.length ? ' (' + (URBEX_SPOTS.length - todo.length) + ' are already there).' : '.') +
+    ' Many are private or guarded, so check the note before going.', 'Import', false);
+  if (!ok) return;
+  let added = 0, failed = 0;
+  for (const s of todo) {
+    toast('Adding ' + (added + failed + 1) + ' of ' + todo.length + '…');
+    try { await Repo.addPlace(s.name, s.address, s.note, s.lat, s.lng, { visited: false }); added++; } catch (e) {
+      if (e.status === SIGNED_OUT) { handleError(e); return; }
+      failed++;
+    }
+  }
+  toast(failed ? 'Added ' + added + ', ' + failed + ' failed. Run it again to retry.' : 'Added ' + added + ' urbex spots.');
+  state.positioned = false;
+  await loadPlaces();
+}
+
+function distMeters(a, b) {
+  const R = 6371000, r = Math.PI / 180;
+  const dLat = (b[0] - a[0]) * r, dLng = (b[1] - a[1]) * r;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+
 function openSettings() {
   const body = el('div', null);
   body.appendChild(el('div', { class: 'menu-who' },
@@ -2153,7 +2190,10 @@ function openSettings() {
   body.appendChild(toggleRow('Light theme', 'Switch between light and dark.', currentTheme() === 'light', (on) => {
     applyTheme(on ? 'light' : 'dark');
   }));
-  dialog('Settings', body, [
+  const modButtons = Repo.isMod && URBEX_SPOTS.length ? [{
+    label: 'Import urbex spots', onClick: () => { setTimeout(() => importSpots().catch(handleError), 0); return true; },
+  }] : [];
+  dialog('Settings', body, modButtons.concat([
     {
       label: 'Log out', kind: 'danger-outline', onClick: async () => {
         const ok = await confirmDialog('Really log out?',
@@ -2166,7 +2206,7 @@ function openSettings() {
       },
     },
     { label: 'Close', kind: 'primary', value: null },
-  ]);
+  ]));
 }
 
 // ---------------------------------------------------------------- wire up
