@@ -1,0 +1,2236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- ===== SETUP: paste your two Firebase values here (see the setup guide) ===== -->
+<meta name="firebase-api-key" content="PASTE_WEB_API_KEY_HERE">
+<meta name="firebase-project-id" content="PASTE_PROJECT_ID_HERE">
+<!-- ============================================================================ -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hhQ6EcrjMa9ZNHbsm0Hk57qFvdsvfdMNtcWSmdDlVOc=' https://cdnjs.cloudflare.com; style-src 'unsafe-inline' https://cdnjs.cloudflare.com; img-src data: https://tile.openstreetmap.org https://cdnjs.cloudflare.com; connect-src https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://nominatim.openstreetmap.org; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Places Map">
+<meta name="theme-color" content="#0E1013">
+<title>Places Map</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+:root{--bg:#0E1013;--surface:#161A1F;--surface2:#1E232A;--line:#2A3039;--text:#E8EAED;--muted:#8C95A3;
+--accent:#F5A524;--accent-ink:#1A1205;--been:#3DBE7A;--danger:#F0574A;--blue:#4DA3FF;
+--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px)}
+:root[data-theme="light"]{--bg:#F4F5F2;--surface:#FFFFFF;--surface2:#EDEFEA;--line:#DCE0D8;--text:#1A1D21;--muted:#5C6570;--accent-ink:#1A1205}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body.in-app{overflow:hidden;position:fixed;inset:0}
+[hidden]{display:none!important}
+h1,h2{margin:0;letter-spacing:-.01em}
+p{margin:.4em 0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}.small{font-size:13px}.strong{font-weight:700}.danger-text{color:var(--danger)}
+.row{display:flex;align-items:center}.gap{gap:8px;flex-wrap:wrap}.grow{flex:1;min-width:0}
+input,textarea{font:inherit;color:var(--text);width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);outline:none;-webkit-appearance:none;appearance:none}
+input::placeholder,textarea::placeholder{color:#6B7380}
+input:focus,textarea:focus{border-color:var(--accent)}
+input[type=checkbox]{width:22px;height:22px;padding:0;-webkit-appearance:checkbox;appearance:auto;accent-color:var(--accent);flex:none}
+.btn{font:inherit;font-weight:700;border-radius:12px;padding:0 16px;min-height:44px;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.been{background:rgba(61,190,122,.15);border-color:var(--been);color:var(--been)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.danger-outline{border-color:rgba(240,87,74,.5);color:var(--danger);background:transparent}
+.btn.outline{background:transparent}
+.btn.small{min-height:36px;font-size:14px;padding:0 12px;border-radius:10px}
+.btn.big{width:100%;min-height:52px;font-size:17px;margin:14px 0 4px}
+.btn:disabled{opacity:.45}
+.btn:active{filter:brightness(1.15)}
+.icon-btn{background:none;border:0;color:var(--text);padding:10px;cursor:pointer;display:flex;border-radius:10px}
+.icon-btn:active{background:var(--surface2)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.card-title{font-weight:700;font-size:17px}
+.card .row{margin-top:10px}
+.field{display:block;margin:0 0 12px}.field span{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+.check{display:flex;align-items:center;gap:10px;margin:10px 0}
+/* login */
+#login{min-height:100%;padding:calc(64px + var(--st)) calc(24px + var(--sr)) calc(24px + var(--sb)) calc(24px + var(--sl));max-width:440px;margin:0 auto}
+.brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:28px}
+.brand-mark{width:64px;height:64px;border-radius:18px;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.brand h1{font-size:28px}
+#login form{display:flex;flex-direction:column;gap:12px}
+#login .btn{width:100%;min-height:50px}
+.info{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:12px 14px;margin:0 0 16px;white-space:pre-wrap;font-size:15px}
+.spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:18px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* app layout */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+.topbar{background:var(--bg);display:flex;align-items:center;gap:8px;padding:calc(8px + var(--st)) calc(6px + var(--sr)) 8px calc(16px + var(--sl));border-bottom:1px solid var(--line)}
+.topbar h1{font-size:20px}
+.topbar .who{font-size:12px;color:var(--muted)}
+main{flex:1;position:relative;min-height:0}
+.page{position:absolute;inset:0;display:flex;flex-direction:column}
+.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px calc(16px + var(--sr)) 20px calc(16px + var(--sl));flex:1}
+.page-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.page-head h2{font-size:24px}
+nav{display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--sb)}
+nav button{flex:1;background:none;border:0;font:inherit;font-size:11px;font-weight:700;color:var(--muted);padding:9px 0 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button svg{width:24px;height:24px}
+nav button.active{color:var(--accent)}
+/* map (dark tiles: OpenStreetMap inverted) */
+#map,#add-map{position:absolute;inset:0;background:#191c20;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.6)}
+.me-dot{width:18px;height:18px;border-radius:50%;background:var(--blue);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--blue),0 1px 4px rgba(0,0,0,.5)}
+#fab-locate.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.leaflet-container{font:inherit;background:#191c20}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--line)!important}
+.leaflet-control-attribution{background:rgba(14,16,19,.75)!important;color:var(--muted)!important}
+.leaflet-control-attribution a{color:var(--muted)!important}
+.fabs{position:absolute;right:calc(16px + var(--sr));bottom:18px;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.fab{box-shadow:0 4px 16px rgba(0,0,0,.45);min-height:54px;border-radius:16px}
+#fab-locate{width:54px;padding:0}
+.pin{width:30px;height:30px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);border:2.5px solid #0E1013;box-shadow:0 3px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+.pin span{transform:rotate(45deg);color:#0E1013;font-weight:900;font-size:15px;line-height:1}
+.pin:not(.been) span::before{content:"";display:block;width:9px;height:9px;border-radius:50%;background:#0E1013}
+.pin.mine{background:#FFD27A}
+.pin.been{background:var(--been)}
+/* places list */
+.filters{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin:0 0 6px}
+.filters button{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-weight:700;font-size:14px;padding:8px 0;border-radius:9px;cursor:pointer}
+.filters button.active{background:var(--surface2);color:var(--text)}
+.place-card{display:flex;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;margin:10px 0;color:var(--text);font:inherit;cursor:pointer;align-items:stretch}
+.place-card.been{border-color:rgba(61,190,122,.45)}
+.cover{width:84px;height:84px;border-radius:12px;object-fit:cover;flex:none;background:var(--surface2)}
+.cover.empty{display:flex;align-items:center;justify-content:center;font-size:30px;opacity:.6}
+.place-text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.tag{background:var(--surface2);border-radius:999px;padding:2px 8px;font-weight:600}
+.tag.been{background:rgba(61,190,122,.16);color:var(--been)}
+.empty{text-align:center;color:var(--muted);padding:48px 0}
+/* sheets */
+.sheet{position:fixed;inset:0;z-index:1500;background:var(--bg);display:flex;flex-direction:column}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet .topbar h1{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pad{padding:14px calc(16px + var(--sr)) 24px calc(16px + var(--sl))}
+.section-label{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.photo{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface2);border:0;padding:0;cursor:pointer}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo.add{border:1.5px dashed var(--line);background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;font:inherit;font-size:13px;font-weight:700;gap:2px}
+.photo.add .plus{font-size:28px;line-height:1;color:var(--accent)}
+.photo-x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.photo-loading{grid-column:1/-1;color:var(--muted);padding:20px 0;text-align:center}
+.progress{color:var(--accent);font-size:14px;font-weight:600;min-height:0}
+.detail-meta .addr{font-size:16px}
+.detail-meta>*{margin-bottom:4px}
+.detail-note{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;white-space:pre-wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600}
+.chip.me{border-color:var(--been);color:var(--been)}
+.detail-actions{margin-top:20px}
+/* add sheet */
+.add-form{display:flex;flex-direction:column;gap:10px}
+#add-results{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-height:40vh;overflow-y:auto}
+.result{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);font:inherit;font-size:14px;padding:12px 14px;color:var(--text);cursor:pointer}
+.result:last-child{border-bottom:0}
+#add-addr{font-size:13px;color:var(--muted)}
+.add-map-wrap{position:relative;height:300px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.add-bottom{background:var(--bg);border-top:1px solid var(--line);padding:10px calc(16px + var(--sr)) calc(10px + var(--sb)) calc(16px + var(--sl))}
+.add-bottom .btn{width:100%;min-height:50px}
+.been-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-weight:600}
+/* accounts */
+.acct{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.acct.off .acct-name{color:var(--muted);text-decoration:line-through}
+.acct-name{font-weight:700}
+.keychip{font:600 12px/1 ui-monospace,Menlo,Consolas,monospace;color:var(--accent);background:rgba(245,165,36,.1);border:1px solid rgba(245,165,36,.35);border-radius:8px;padding:7px 8px;cursor:pointer;letter-spacing:.3px;white-space:nowrap}
+#accounts-list .icon-btn{font-size:22px;line-height:1;padding:6px 10px;color:var(--muted)}
+.mod-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;background:rgba(245,165,36,.16);border:1px solid rgba(245,165,36,.5);color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.06em;line-height:1.5;vertical-align:middle}
+.name-line{display:inline}
+.bubble .sender .mod-tag{font-size:9px;padding:0 5px}
+/* chat list */
+.chat-row{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 2px;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.chat-row .row{gap:8px}
+.chat-title{font-weight:700;font-size:16px}
+.chat-row.unread .chat-title{color:var(--accent)}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--muted);flex:none}
+.avatar.group{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-size:20px}
+.clamp1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unread-dot,nav button.dot::after{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+nav button{position:relative}
+nav button.dot::after{content:"";position:absolute;top:7px;left:calc(50% + 8px)}
+.convo-bar{display:flex;align-items:center;gap:6px;padding:6px calc(10px + var(--sr)) 6px calc(4px + var(--sl));border-bottom:1px solid var(--line);background:var(--bg)}
+.picker{max-height:55vh;overflow-y:auto}
+/* chat */
+#chat-list{padding:12px calc(12px + var(--sr)) 12px calc(12px + var(--sl))}
+.msg-row{display:flex;margin:5px 0}.msg-row.mine{justify-content:flex-end}
+.bubble{max-width:80%;background:var(--surface2);border-radius:16px 16px 16px 4px;padding:8px 12px}
+.bubble.mine{background:var(--accent);color:var(--accent-ink);border-radius:16px 16px 4px 16px}
+.bubble.mine .time{color:rgba(26,18,5,.6)}
+.bubble.deletable{cursor:pointer}
+.bubble .sender{font-size:12px;font-weight:700;color:var(--accent)}
+.bubble .text{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
+.bubble .time{font-size:11px;color:var(--muted);text-align:right;margin-top:2px}
+#chat-form{display:flex;gap:8px;align-items:flex-end;background:var(--surface);border-top:1px solid var(--line);padding:8px calc(10px + var(--sr)) 8px calc(10px + var(--sl))}
+#chat-input{resize:none;height:44px;max-height:120px;border-radius:22px;padding:11px 16px}
+#chat-send{border-radius:22px}
+/* photo viewer */
+#viewer{position:fixed;inset:0;z-index:2500;background:#000;display:flex;flex-direction:column}
+#viewer .vbar{display:flex;align-items:center;justify-content:space-between;padding:calc(6px + var(--st)) calc(8px + var(--sr)) 6px calc(8px + var(--sl))}
+#viewer .vstage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+#viewer-img{max-width:100%;max-height:100%;object-fit:contain;transition:filter .2s}
+#viewer-img.loading{filter:blur(6px)}
+.vnav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:28px;cursor:pointer}
+#viewer-prev{left:0;border-radius:0 12px 12px 0}#viewer-next{right:0;border-radius:12px 0 0 12px}
+#viewer-caption{color:#bbb;font-size:13px;text-align:center;padding:10px 16px calc(14px + var(--sb))}
+/* modal + toast */
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:19px;margin-bottom:10px}
+.modal p{white-space:pre-wrap}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.menu-who{padding:4px 0 8px}
+.set-row{display:flex;align-items:center;gap:12px;padding:14px 2px;border-top:1px solid var(--line)}
+.set-label{font-weight:700;font-size:16px}
+.switch{position:relative;width:52px;height:30px;flex:none;display:inline-block}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.switch .knob{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--line);border-radius:999px;transition:background .15s}
+.switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.switch input:checked + .knob{background:var(--accent);border-color:var(--accent)}
+.switch input:checked + .knob::after{transform:translateX(22px);background:var(--accent-ink)}
+.keybox{font:700 20px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--accent);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;margin:8px 0;-webkit-user-select:all;user-select:all;letter-spacing:.5px}
+#toast{position:fixed;left:50%;top:calc(70px + var(--st));transform:translateX(-50%) translateY(-20px);background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:10px 16px;font-size:14px;max-width:90vw;opacity:0;pointer-events:none;transition:all .25s;z-index:4000;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<section id="login" hidden>
+  <div class="brand">
+    <div class="brand-mark"><svg width="34" height="34" viewBox="0 0 24 24" fill="#1A1205"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></div>
+    <h1>Places Map</h1>
+  </div>
+  <div id="ios-tip" class="info" hidden>Add to Home Screen first: tap Share, then <b>Add to Home Screen</b>, and log in from that icon.</div>
+  <div id="login-info" class="info" hidden></div>
+  <form id="login-form" autocomplete="off">
+    <input id="login-user" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
+    <input id="login-key" placeholder="Key" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="one-time-code">
+    <button id="login-btn" class="btn primary" type="submit">Log in</button>
+  </form>
+  <div id="setup-card" hidden>
+    <form id="setup-form" autocomplete="off">
+      <div class="section-label" style="margin-top:0">First-time setup</div>
+      <input id="setup-user" placeholder="Username (a-z, 0-9, _)" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <input id="setup-name" placeholder="Display name" autocapitalize="words">
+      <button id="setup-btn" class="btn primary" type="submit">Create moderator account</button>
+    </form>
+  </div>
+  <div id="login-spin" class="spin" hidden></div>
+</section>
+
+<section id="app" hidden>
+  <header class="topbar">
+    <div class="grow"><h1>Places Map</h1><div id="who" class="who"></div></div>
+    <button id="menu" class="icon-btn" type="button" aria-label="Account">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    </button>
+  </header>
+  <main>
+    <div id="page-map" class="page">
+      <div id="map"></div>
+      <div class="fabs">
+        <button id="fab-locate" class="btn fab" type="button" aria-label="Show my location">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+        <button id="fab-add" class="btn primary fab" type="button">+ Add place</button>
+      </div>
+    </div>
+    <div id="page-places" class="page" hidden>
+      <div class="scroll">
+        <div class="page-head">
+          <div class="grow"><h2>Places</h2><div id="places-count" class="muted small"></div></div>
+          <button id="places-add" class="btn small primary" type="button">+ Add</button>
+        </div>
+        <div class="filters">
+          <button id="filter-all" type="button">All</button>
+          <button id="filter-mine" type="button">Mine</button>
+          <button id="filter-been" type="button">Been</button>
+          <button id="filter-todo" type="button">Not yet</button>
+        </div>
+        <div id="places-empty" class="empty" hidden></div>
+        <div id="places-list"></div>
+      </div>
+    </div>
+    <div id="page-chat" class="page" hidden>
+      <div id="chat-home" class="scroll">
+        <div class="page-head">
+          <h2 class="grow">Chats</h2>
+          <button id="dm-new" class="btn small primary" type="button">+ New</button>
+        </div>
+        <div id="chat-rows"></div>
+      </div>
+      <div id="chat-convo" class="page" hidden>
+        <div class="convo-bar">
+          <button id="chat-back" class="icon-btn" type="button" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <div class="grow"><div id="chat-title" class="chat-title"></div><div id="chat-sub" class="muted small"></div></div>
+        </div>
+        <div style="flex:1;position:relative;min-height:0;display:flex">
+          <div id="chat-list" class="scroll"></div>
+          <div id="chat-empty" class="empty" hidden style="position:absolute;inset:0;pointer-events:none">No messages yet</div>
+        </div>
+        <form id="chat-form">
+          <textarea id="chat-input" rows="1" placeholder="Message" maxlength="1000"></textarea>
+          <button id="chat-send" class="btn primary" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+    <div id="page-accounts" class="page" hidden>
+      <div class="scroll">
+        <div class="page-head">
+          <h2 class="grow">Accounts</h2>
+          <button id="accounts-new" class="btn small primary" type="button">+ New</button>
+        </div>
+        <div id="accounts-list"></div>
+      </div>
+    </div>
+  </main>
+  <nav>
+    <button id="tab-map" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Map</button>
+    <button id="tab-places" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-7.6 7-12a7 7 0 0 0-14 0c0 4.4 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Places</button>
+    <button id="tab-chat" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4V5z"/></svg>Chat</button>
+    <button id="tab-accounts" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3z"/></svg>Accounts</button>
+  </nav>
+</section>
+
+<section id="place-sheet" class="sheet" hidden>
+  <header class="topbar">
+    <button id="place-back" class="icon-btn" type="button" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 id="place-title" class="grow"></h1>
+  </header>
+  <div class="sheet-body">
+    <div class="pad">
+      <div class="row" style="margin-bottom:8px"><div id="place-photo-count" class="muted small grow"></div><div id="place-upload" class="progress"></div></div>
+      <div id="place-photos" class="photo-grid"></div>
+      <input id="place-file" type="file" accept="image/*" multiple hidden>
+      <div id="place-info" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<section id="add-sheet" class="sheet" hidden>
+  <header class="topbar">
+    <button id="add-back" class="icon-btn" type="button" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 class="grow">New place</h1>
+  </header>
+  <div class="sheet-body">
+    <div class="pad add-form">
+      <input id="add-name" placeholder="Name *" maxlength="80">
+      <form id="add-search-form" class="row" style="gap:8px">
+        <input id="add-search" class="grow" placeholder="Search address" enterkeyhint="search">
+        <button id="add-find" class="btn" type="submit">Find</button>
+      </form>
+      <div id="add-results" hidden></div>
+      <div class="add-map-wrap"><div id="add-map"></div></div>
+      <div id="add-addr"></div>
+      <div class="section-label" style="margin:8px 0 0">Photos</div>
+      <div id="add-photos" class="photo-grid"></div>
+      <input id="add-file" type="file" accept="image/*" multiple hidden>
+      <textarea id="add-note" rows="3" placeholder="Note (optional): entrance, dangers, best time" maxlength="500" style="resize:vertical"></textarea>
+      <label class="been-row"><input id="add-been" type="checkbox" checked><span>I've been here</span></label>
+      <div id="add-progress" class="progress"></div>
+    </div>
+  </div>
+  <div class="add-bottom"><button id="add-save" class="btn primary" type="button">Save place</button></div>
+</section>
+
+<section id="viewer" hidden>
+  <div class="vbar">
+    <button id="viewer-close" class="icon-btn" type="button" aria-label="Close" style="color:#fff"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <button id="viewer-delete" class="btn small danger-outline" type="button">Delete</button>
+  </div>
+  <div class="vstage">
+    <img id="viewer-img" alt="Photo">
+    <button id="viewer-prev" class="vnav" type="button" aria-label="Previous">‹</button>
+    <button id="viewer-next" class="vnav" type="button" aria-label="Next">›</button>
+  </div>
+  <div id="viewer-caption"></div>
+</section>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script>'use strict';
+/* Places Map web app (iPhone / any browser). Same Firebase backend and rules as the Android app. */
+
+// ---------------------------------------------------------------- config
+function meta(name) {
+  const m = document.querySelector('meta[name="' + name + '"]');
+  return m ? (m.getAttribute('content') || '').trim() : '';
+}
+const API_KEY = meta('firebase-api-key');
+const PROJECT_ID = meta('firebase-project-id');
+const CONFIGURED = API_KEY && PROJECT_ID && !API_KEY.includes('PASTE') && !PROJECT_ID.includes('PASTE');
+const AUTH_BASE = meta('pm-auth-base') || 'https://identitytoolkit.googleapis.com';
+const TOKEN_BASE = meta('pm-token-base') || 'https://securetoken.googleapis.com';
+const FS_HOST = meta('pm-fs-base') || 'https://firestore.googleapis.com';
+const GEO_BASE = meta('pm-geo-base') || 'https://nominatim.openstreetmap.org';
+const DEFAULT_CENTER = [47.4979, 19.0402];
+
+// ---------------------------------------------------------------- errors / http
+class ApiError extends Error {
+  constructor(code, status, message) {
+    super(message);
+    this.code = code;
+    this.status = status || '';
+  }
+  get denied() { return this.status === 'PERMISSION_DENIED' || (this.code === 403 && !this.status); }
+  get notFound() { return this.status === 'NOT_FOUND' || (this.code === 404 && !this.status); }
+  get network() { return this.code === 0; }
+}
+const SIGNED_OUT = 'SIGNED_OUT';
+const signedOut = (msg) => new ApiError(401, SIGNED_OUT, msg);
+
+function friendlyError(code, text) {
+  let status = '', msg = '';
+  try {
+    const o = JSON.parse(text);
+    if (o && typeof o.error === 'object' && o.error) {
+      status = o.error.status || '';
+      msg = o.error.message || '';
+    } else if (o && typeof o.error === 'string') {
+      msg = o.error;
+    }
+  } catch (e) { /* not json */ }
+  if (/does not exist/.test(msg) && /database/i.test(msg)) {
+    return new ApiError(code, 'NO_DATABASE', 'The Firestore database hasn’t been created yet (see the setup guide).');
+  }
+  if (/has not been used|is disabled/.test(msg)) {
+    return new ApiError(code, 'API_DISABLED', 'Firestore isn’t enabled for this Firebase project yet (see the setup guide).');
+  }
+  let friendly;
+  if (status === 'PERMISSION_DENIED' || (code === 403 && !status)) friendly = 'Not allowed.';
+  else if (status === 'NOT_FOUND' || code === 404) friendly = 'Not found.';
+  else if (status === 'ALREADY_EXISTS' || code === 409) friendly = 'That already exists.';
+  else if (/ADMIN_ONLY_OPERATION|OPERATION_NOT_ALLOWED/.test(msg)) friendly = 'Anonymous sign-in is not enabled in Firebase (see the setup guide).';
+  else if (/API key not valid|API_KEY_INVALID/.test(msg)) friendly = 'The Firebase API key in index.html is wrong (see the setup guide).';
+  else if (code === 429 || /TOO_MANY_ATTEMPTS/.test(msg)) friendly = 'Too many attempts. Wait a few minutes and try again.';
+  else if (code >= 500) friendly = 'Server problem. Try again in a moment.';
+  else friendly = msg || ('Request failed (' + code + ').');
+  return new ApiError(code, status, friendly);
+}
+
+async function http(method, url, body, contentType, token) {
+  const headers = { Accept: 'application/json' };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  if (body != null) headers['Content-Type'] = contentType || 'application/json; charset=utf-8';
+  let res, text;
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 20000);
+    res = await fetch(url, { method, headers, body: body == null ? undefined : body, signal: ctl.signal, cache: 'no-store' });
+    text = await res.text();
+    clearTimeout(timer);
+  } catch (e) {
+    throw new ApiError(0, 'NETWORK', 'No connection. Check your internet and try again.');
+  }
+  if (!res.ok) throw friendlyError(res.status, text);
+  if (!text) return {};
+  try { return JSON.parse(text); } catch (e) { throw new ApiError(500, 'BAD_RESPONSE', 'Unexpected answer from the server.'); }
+}
+const postJson = (url, obj, token) => http('POST', url, JSON.stringify(obj || {}), null, token);
+
+// ---------------------------------------------------------------- Firestore REST
+const FS_ROOT = 'projects/' + PROJECT_ID + '/databases/(default)/documents';
+const FS_BASE = FS_HOST + '/v1/' + FS_ROOT;
+const docName = (path) => FS_ROOT + '/' + path;
+const int = (n) => ({ __int: n });
+
+function encodeValue(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'string') return { stringValue: v };
+  if (typeof v === 'boolean') return { booleanValue: v };
+  if (typeof v === 'number') return { doubleValue: v };
+  if (typeof v === 'object' && '__int' in v) return { integerValue: String(v.__int) };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(encodeValue) } };
+  if (typeof v === 'object') return { mapValue: { fields: encodeFields(v) } };
+  throw new Error('Unsupported value');
+}
+function encodeFields(f) {
+  const o = {};
+  for (const k of Object.keys(f)) o[k] = encodeValue(f[k]);
+  return o;
+}
+function decodeValue(v) {
+  if ('stringValue' in v) return v.stringValue;
+  if ('integerValue' in v) return Number(v.integerValue);
+  if ('doubleValue' in v) return Number(v.doubleValue);
+  if ('booleanValue' in v) return !!v.booleanValue;
+  if ('timestampValue' in v) { const t = Date.parse(v.timestampValue); return { __ts: isNaN(t) ? 0 : t }; }
+  if ('arrayValue' in v) return ((v.arrayValue && v.arrayValue.values) || []).map(decodeValue);
+  if ('mapValue' in v) { const o = {}; const f = (v.mapValue && v.mapValue.fields) || {}; for (const k of Object.keys(f)) o[k] = decodeValue(f[k]); return o; }
+  return null;
+}
+function parseDoc(d) {
+  const name = d.name || '';
+  const out = { id: name.substring(name.lastIndexOf('/') + 1), f: {} };
+  const f = d.fields || {};
+  for (const k of Object.keys(f)) out.f[k] = decodeValue(f[k]);
+  return out;
+}
+const str = (d, k) => (typeof d.f[k] === 'string' ? d.f[k] : '');
+const num = (d, k) => (typeof d.f[k] === 'number' ? d.f[k] : 0);
+const bool = (d, k) => d.f[k] === true;
+const ts = (d, k) => (d.f[k] && typeof d.f[k] === 'object' && '__ts' in d.f[k] ? d.f[k].__ts : 0);
+
+function encodePath(path) { return path.split('/').map(encodeURIComponent).join('/'); }
+
+async function fsGet(path, token) {
+  try {
+    return parseDoc(await http('GET', FS_BASE + '/' + encodePath(path), null, null, token));
+  } catch (e) {
+    if (e instanceof ApiError && e.notFound) return null;
+    throw e;
+  }
+}
+
+async function fsQuery(collection, orderBy, descending, limit, afterMs, token) {
+  return fsQueryX(collection, { orderBy, descending, limit, afterMs }, token);
+}
+
+/** opts: {orderBy, descending, limit, afterMs, eq: [field, stringValue], select: [fields]} */
+async function fsQueryX(collection, opts, token) {
+  const { orderBy, descending, limit, afterMs, eq, select, contains, parent } = opts;
+  const sq = { from: [{ collectionId: collection }] };
+  if (select) sq.select = { fields: select.map((f) => ({ fieldPath: f })) };
+  if (contains) sq.where = { fieldFilter: { field: { fieldPath: contains[0] }, op: 'ARRAY_CONTAINS', value: { stringValue: contains[1] } } };
+  if (eq) sq.where = { fieldFilter: { field: { fieldPath: eq[0] }, op: 'EQUAL', value: typeof eq[1] === 'boolean' ? { booleanValue: eq[1] } : { stringValue: eq[1] } } };
+  if (orderBy) sq.orderBy = [{ field: { fieldPath: orderBy }, direction: descending ? 'DESCENDING' : 'ASCENDING' }];
+  if (afterMs > 0 && orderBy) {
+    sq.where = { fieldFilter: { field: { fieldPath: orderBy }, op: 'GREATER_THAN', value: { timestampValue: new Date(afterMs).toISOString() } } };
+  }
+  if (limit > 0) sq.limit = limit;
+  const arr = await postJson(FS_BASE + (parent ? '/' + encodePath(parent) : '') + ':runQuery', { structuredQuery: sq }, token);
+  const out = [];
+  if (Array.isArray(arr)) for (const item of arr) if (item && item.document) out.push(parseDoc(item.document));
+  return out;
+}
+
+// Write builders
+const W = {
+  create: (path, fields, serverTime) => ({ kind: 'create', path, fields, serverTime }),
+  update: (path, fields) => ({ kind: 'update', path, fields }),
+  del: (path) => ({ kind: 'delete', path }),
+  set: (path, fields, serverTime) => ({ kind: 'set', path, fields, serverTime }), // create or overwrite
+};
+function writeJson(w) {
+  if (w.kind === 'delete') return { delete: docName(w.path), currentDocument: { exists: true } };
+  const o = { update: { name: docName(w.path), fields: encodeFields(w.fields) } };
+  if (w.kind === 'update') o.updateMask = { fieldPaths: Object.keys(w.fields) };
+  if (w.kind !== 'set') o.currentDocument = { exists: w.kind === 'update' };
+  if (w.serverTime) o.updateTransforms = [{ fieldPath: w.serverTime, setToServerValue: 'REQUEST_TIME' }];
+  return o;
+}
+async function fsCommit(writes, token) {
+  await postJson(FS_BASE + ':commit', { writes: writes.map(writeJson) }, token);
+}
+
+// ---------------------------------------------------------------- keys
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function randomFrom(abc, n) {
+  const out = [];
+  const buf = new Uint8Array(n * 2);
+  while (out.length < n) {
+    crypto.getRandomValues(buf);
+    for (const b of buf) {
+      // rejection sampling keeps every character equally likely
+      if (b < 256 - (256 % abc.length)) out.push(abc[b % abc.length]);
+      if (out.length === n) break;
+    }
+  }
+  return out.join('');
+}
+const newKey = () => randomFrom(ALPHABET, 20);
+const newDocId = () => randomFrom('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 20);
+const prettyKey = (k) => k.replace(/(.{5})(?=.)/g, '$1-');
+const normKey = (t) => (t || '').toUpperCase().replace(/[\s-]/g, '');
+const keyOk = (k) => /^[A-HJ-NP-Z2-9]{20}$/.test(k);
+const normUser = (t) => (t || '').trim().toLowerCase();
+const userOk = (u) => /^[a-z0-9_]{3,20}$/.test(u);
+
+// ---------------------------------------------------------------- secure local storage
+// The login is encrypted with a key the browser creates as non-extractable and keeps in
+// IndexedDB: copying the saved data to another device is useless without it.
+const SecureStore = (() => {
+  const LS = 'pm_session_v1';
+  let keyPromise = null;
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const r = indexedDB.open('placesmap', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('keys');
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  function idb(db, mode, fn) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('keys', mode);
+      const req = fn(tx.objectStore('keys'));
+      tx.oncomplete = () => resolve(req && req.result);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function getKey(create) {
+    const db = await openDb();
+    let k = await idb(db, 'readonly', (s) => s.get('session'));
+    if (!k && create) {
+      k = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+      await idb(db, 'readwrite', (s) => s.put(k, 'session'));
+    }
+    return k || null;
+  }
+  const b64 = (u8) => btoa(String.fromCharCode.apply(null, Array.from(u8)));
+  const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  return {
+    async save(obj) {
+      try {
+        const k = await (keyPromise = getKey(true));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, new TextEncoder().encode(JSON.stringify(obj))));
+        localStorage.setItem(LS, b64(iv) + ':' + b64(ct));
+        return true;
+      } catch (e) {
+        localStorage.removeItem(LS);
+        return false;
+      }
+    },
+    async load() {
+      const v = localStorage.getItem(LS);
+      if (!v) return null;
+      try {
+        const [ivs, cts] = v.split(':');
+        const k = await getKey(false);
+        if (!k) throw new Error('no key');
+        const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(ivs) }, k, unb64(cts));
+        return JSON.parse(new TextDecoder().decode(pt));
+      } catch (e) {
+        localStorage.removeItem(LS);
+        return null;
+      }
+    },
+    clear() { try { localStorage.removeItem(LS); } catch (e) { /* ignore */ } },
+  };
+})();
+
+// ---------------------------------------------------------------- repo (same logic as Android)
+const Repo = (() => {
+  let auth = null; // {uid, idToken, refreshToken, expiresAt}
+  let me = null;   // {accountId, displayName, role}
+  let tempAuth = null;
+  let refreshing = null;
+
+  const authUrl = (path) => AUTH_BASE + '/v1/' + path + '?key=' + encodeURIComponent(API_KEY);
+
+  async function signUpAnonymous() {
+    const r = await postJson(authUrl('accounts:signUp'), { returnSecureToken: true });
+    return { uid: r.localId, idToken: r.idToken, refreshToken: r.refreshToken, expiresAt: Date.now() + 1000 * Number(r.expiresIn || 3600) };
+  }
+  async function refresh(a) {
+    const body = 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(a.refreshToken);
+    const r = await http('POST', TOKEN_BASE + '/v1/token?key=' + encodeURIComponent(API_KEY), body, 'application/x-www-form-urlencoded', null);
+    a.idToken = r.id_token;
+    a.refreshToken = r.refresh_token;
+    a.expiresAt = Date.now() + 1000 * Number(r.expires_in || 3600);
+  }
+  function persist() {
+    if (!auth || !me) { SecureStore.clear(); return Promise.resolve(); }
+    return SecureStore.save({ auth, me });
+  }
+  function clearLocal() {
+    auth = null; me = null;
+    SecureStore.clear();
+  }
+  async function token() {
+    if (!auth) throw signedOut('Please log in.');
+    if (!auth.idToken || Date.now() > auth.expiresAt - 5 * 60 * 1000) {
+      if (!refreshing) {
+        refreshing = (async () => {
+          try {
+            await refresh(auth);
+            await persist();
+          } catch (e) {
+            if (e.network || e.code >= 500) throw e;
+            clearLocal();
+            throw signedOut('Your login has expired. Please log in again.');
+          }
+        })().finally(() => { refreshing = null; });
+      }
+      await refreshing;
+    }
+    return auth.idToken;
+  }
+  async function tempToken() {
+    if (!tempAuth || Date.now() > tempAuth.expiresAt - 5 * 60 * 1000) tempAuth = await signUpAnonymous();
+    return tempAuth.idToken;
+  }
+  async function deleteFirebaseUser(idToken) {
+    try { await postJson(authUrl('accounts:delete'), { idToken }); } catch (e) { /* best effort */ }
+  }
+  async function interpret(e) {
+    if (!(e instanceof ApiError) || !e.denied) return e;
+    try { await api.verifySession(); } catch (v) { if (v.status === SIGNED_OUT) return v; }
+    return new ApiError(403, e.status, 'You’re not allowed to do that.');
+  }
+  async function guarded(fn) {
+    try { return await fn(); } catch (e) { throw await interpret(e); }
+  }
+
+  const api = {
+    get loggedIn() { return !!(auth && me); },
+    get myId() { return me && me.accountId; },
+    get myName() { return me && me.displayName; },
+    get isMod() { return !!(me && me.role === 'mod'); },
+
+    async loadSaved() {
+      const s = await SecureStore.load();
+      if (s && s.auth && s.me && s.auth.refreshToken) { auth = s.auth; me = s.me; }
+    },
+
+    async isSetupDone() { return (await fsGet('meta/setup', await tempToken())) !== null; },
+
+    async login(userTyped, keyTyped) {
+      const username = normUser(userTyped), key = normKey(keyTyped);
+      if (!userOk(username)) throw new ApiError(400, 'INPUT', 'Enter your username.');
+      if (!keyOk(key)) throw new ApiError(400, 'INPUT', 'That key doesn\u2019t look right. It has 20 letters and numbers.');
+      const a = await signUpAnonymous();
+      try {
+        await fsCommit([
+          W.create('sessions/' + a.uid, { accountId: username, key }, 'createdAt'),
+          W.update('invites/' + key, { used: true, usedBy: a.uid }),
+        ], a.idToken);
+      } catch (e) {
+        deleteFirebaseUser(a.idToken);
+        if (e.denied || e.notFound || e.status === 'FAILED_PRECONDITION') {
+          throw new ApiError(403, 'BAD_KEY', 'Wrong username or key, or the key was already used.');
+        }
+        throw e;
+      }
+      const acc = await fsGet('accounts/' + username, a.idToken);
+      auth = a;
+      me = { accountId: username, displayName: acc ? str(acc, 'displayName') : username, role: acc ? str(acc, 'role') : 'user' };
+      tempAuth = null;
+      if (!(await persist())) toast('This browser can’t save the login (private mode?). You’ll need a new key next time.');
+    },
+
+    async setupFirstModerator(userTyped, nameTyped) {
+      const username = normUser(userTyped), dn = (nameTyped || '').trim();
+      if (!userOk(username)) throw new ApiError(400, 'INPUT', 'Username: 3-20 characters, only a-z, 0-9 and _.');
+      if (!dn || dn.length > 40) throw new ApiError(400, 'INPUT', 'Enter a display name (max 40).');
+      const a = await signUpAnonymous();
+      const key = newKey();
+      try {
+        await fsCommit([
+          W.create('accounts/' + username, { displayName: dn, role: 'mod', keyGen: int(1), disabled: false }, 'createdAt'),
+          W.create('invites/' + key, { accountId: username, gen: int(1), used: true, usedBy: a.uid }, 'createdAt'),
+          W.create('sessions/' + a.uid, { accountId: username, key }, 'createdAt'),
+          W.create('meta/setup', { owner: username }, 'createdAt'),
+        ], a.idToken);
+      } catch (e) {
+        deleteFirebaseUser(a.idToken);
+        if (e.denied) throw new ApiError(403, 'SETUP_DONE', 'Setup was already done (or the security rules aren’t published yet).');
+        throw e;
+      }
+      auth = a;
+      me = { accountId: username, displayName: dn, role: 'mod' };
+      tempAuth = null;
+      await persist();
+    },
+
+    async verifySession() {
+      if (!me) throw signedOut('Please log in.');
+      let acc;
+      try {
+        acc = await fsGet('accounts/' + me.accountId, await token());
+      } catch (e) {
+        if (e.denied) { clearLocal(); throw signedOut('Your access was removed or your key was regenerated. Please log in again.'); }
+        throw e;
+      }
+      if (!acc) { clearLocal(); throw signedOut('Your account was removed.'); }
+      me.displayName = str(acc, 'displayName');
+      me.role = str(acc, 'role');
+      await persist();
+    },
+
+    async logout() {
+      if (auth) {
+        try {
+          const t = await token();
+          await fsCommit([W.del('sessions/' + auth.uid)], t);
+          await deleteFirebaseUser(t);
+        } catch (e) { /* local logout is what matters */ }
+      }
+      clearLocal();
+    },
+
+    // places
+    places: () => guarded(async () => (await fsQuery('places', 'createdAt', true, 1000, 0, await token())).map((d) => ({
+      id: d.id, name: str(d, 'name'), address: str(d, 'address'), note: str(d, 'note'),
+      ownerId: str(d, 'ownerId'), ownerName: str(d, 'ownerName'), lat: num(d, 'lat'), lng: num(d, 'lng'), createdAt: ts(d, 'createdAt'),
+      cover: str(d, 'cover'),
+    }))),
+
+    async addPlace(name, address, note, lat, lng, extra) {
+      const opts = extra || {};
+      const n = (name || '').trim();
+      if (!n) throw new ApiError(400, 'INPUT', 'Give the place a name.');
+      if (n.length > 80) throw new ApiError(400, 'INPUT', 'Name is too long (max 80).');
+      const addr = (address || '').trim().slice(0, 300);
+      const nt = (note || '').trim();
+      if (nt.length > 500) throw new ApiError(400, 'INPUT', 'Note is too long (max 500).');
+      const id = newDocId();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const fields = { name: n, address: addr, note: nt, lat: Number(lat), lng: Number(lng), ownerId: me.accountId, ownerName: me.displayName };
+          if (opts.cover) fields.cover = opts.cover;
+          const writes = [W.create('places/' + id, fields, 'createdAt')];
+          if (opts.visited) writes.push(W.create('visits/' + id + '_' + me.accountId, { placeId: id, accountId: me.accountId, name: me.displayName }, 'createdAt'));
+          await fsCommit(writes, await token());
+          return id;
+        } catch (e) {
+          if (attempt === 0 && e.denied) { await api.verifySession(); continue; }
+          throw await interpret(e);
+        }
+      }
+    },
+
+    /** Removes the place and its photos and check-ins (photos first, while the place still exists). */
+    deletePlace: (id) => guarded(async () => {
+      const t = await token();
+      const photos = await fsQueryX('photos', { eq: ['placeId', id], select: ['placeId'], limit: 1000 }, t);
+      const visits = await fsQueryX('visits', { eq: ['placeId', id], select: ['placeId'], limit: 1000 }, t);
+      const dels = photos.map((d) => W.del('photos/' + d.id)).concat(visits.map((d) => W.del('visits/' + d.id)));
+      while (dels.length > 400) await fsCommit(dels.splice(0, 400), await token());
+      dels.push(W.del('places/' + id));
+      try { await fsCommit(dels, await token()); } catch (e) { if (!e.notFound) throw e; }
+    }),
+
+    updateCover: (id, cover) => guarded(async () => {
+      await fsCommit([W.update('places/' + id, { cover })], await token());
+    }),
+
+    // check-ins
+    visits: () => guarded(async () => (await fsQueryX('visits', { limit: 5000 }, await token())).map((d) => ({
+      id: d.id, placeId: str(d, 'placeId'), accountId: str(d, 'accountId'), name: str(d, 'name'), createdAt: ts(d, 'createdAt'),
+    }))),
+
+    async setVisited(placeId, visited) {
+      const vid = placeId + '_' + me.accountId;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          if (visited) await fsCommit([W.create('visits/' + vid, { placeId, accountId: me.accountId, name: me.displayName }, 'createdAt')], await token());
+          else await fsCommit([W.del('visits/' + vid)], await token());
+          return;
+        } catch (e) {
+          if (e.notFound && !visited) return;
+          if (attempt === 0 && e.denied) { await api.verifySession(); continue; }
+          throw await interpret(e);
+        }
+      }
+    },
+
+    // photos
+    photosOf: (placeId) => guarded(async () => (await fsQueryX('photos', {
+      eq: ['placeId', placeId], select: ['placeId', 'ownerId', 'ownerName', 'thumb', 'createdAt'], limit: 300,
+    }, await token())).map((d) => ({
+      id: d.id, placeId: str(d, 'placeId'), ownerId: str(d, 'ownerId'), ownerName: str(d, 'ownerName'), thumb: str(d, 'thumb'), createdAt: ts(d, 'createdAt'),
+    })).sort((a, b) => a.createdAt - b.createdAt)),
+
+    photoData: (id) => guarded(async () => {
+      const d = await fsGet('photos/' + id, await token());
+      return d ? str(d, 'data') : '';
+    }),
+
+    async addPhoto(placeId, photo) {
+      const id = newDocId();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await fsCommit([W.create('photos/' + id, {
+            placeId, ownerId: me.accountId, ownerName: me.displayName, thumb: photo.thumb, data: photo.data,
+          }, 'createdAt')], await token());
+          return id;
+        } catch (e) {
+          if (attempt === 0 && e.denied) { await api.verifySession(); continue; }
+          throw await interpret(e);
+        }
+      }
+    },
+
+    deletePhoto: (id) => guarded(async () => {
+      try { await fsCommit([W.del('photos/' + id)], await token()); } catch (e) { if (!e.notFound) throw e; }
+    }),
+
+    // chat
+    messages: () => guarded(async () => (await fsQuery('messages', 'createdAt', true, 100, 0, await token())).map(toMsg).reverse()),
+    lastMessage: () => guarded(async () => {
+      const l = (await fsQuery('messages', 'createdAt', true, 1, 0, await token())).map(toMsg);
+      return l[0] || null;
+    }),
+    messagesSince: (ms) => guarded(async () => (await fsQuery('messages', 'createdAt', false, 100, ms, await token())).map(toMsg)),
+
+    async sendMessage(text) {
+      const t = (text || '').trim();
+      if (!t) return;
+      if (t.length > 1000) throw new ApiError(400, 'INPUT', 'Message is too long (max 1000).');
+      const id = newDocId();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await fsCommit([W.create('messages/' + id, { text: t, senderId: me.accountId, senderName: me.displayName }, 'createdAt')], await token());
+          return;
+        } catch (e) {
+          if (attempt === 0 && e.denied) { await api.verifySession(); continue; }
+          throw await interpret(e);
+        }
+      }
+    },
+
+    deleteMessage: (id) => guarded(async () => {
+      try { await fsCommit([W.del('messages/' + id)], await token()); } catch (e) { if (!e.notFound) throw e; }
+    }),
+
+    // private chats
+    chatIdWith: (other) => [me.accountId, other].sort().join('-'),
+
+    /** My private chats (latest message summary each), newest first. */
+    inbox: () => guarded(async () => (await fsQueryX('chats', { parent: 'dmIndex/' + me.accountId, limit: 500 }, await token()))
+      .map((d) => {
+        const members = Array.isArray(d.f.members) ? d.f.members : [];
+        const other = members.find((m) => m !== me.accountId) || '';
+        const names = d.f.names && typeof d.f.names === 'object' ? d.f.names : {};
+        return { chatId: d.id, other, otherName: names[other] || other, lastText: str(d, 'lastText'), lastFrom: str(d, 'lastFrom'), lastAt: ts(d, 'lastAt') };
+      }).sort((a, b) => b.lastAt - a.lastAt)),
+
+    dmMessages: (other, sinceMs) => guarded(async () => {
+      const parent = 'dms/' + api.chatIdWith(other);
+      if (sinceMs > 0) return (await fsQueryX('messages', { parent, orderBy: 'createdAt', descending: false, limit: 100, afterMs: sinceMs }, await token())).map(toMsg);
+      return (await fsQueryX('messages', { parent, orderBy: 'createdAt', descending: true, limit: 100 }, await token())).map(toMsg).reverse();
+    }),
+
+    async sendDm(other, otherName, text) {
+      const t = (text || '').trim();
+      if (!t) return;
+      if (t.length > 1000) throw new ApiError(400, 'INPUT', 'Message is too long (max 1000).');
+      const chat = api.chatIdWith(other), id = newDocId();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const names = {};
+          names[me.accountId] = me.displayName;
+          names[other] = otherName || other;
+          await fsCommit([
+            W.create('dms/' + chat + '/messages/' + id, { text: t, senderId: me.accountId, senderName: me.displayName }, 'createdAt'),
+            W.set('dmIndex/' + me.accountId + '/chats/' + chat, { members: chat.split('-'), names, lastText: t.slice(0, 120), lastFrom: me.accountId }, 'lastAt'),
+            W.set('dmIndex/' + other + '/chats/' + chat, { members: chat.split('-'), names, lastText: t.slice(0, 120), lastFrom: me.accountId }, 'lastAt'),
+          ], await token());
+          return;
+        } catch (e) {
+          if (attempt === 0 && e.denied) { await api.verifySession(); continue; }
+          throw await interpret(e);
+        }
+      }
+    },
+
+    deleteDm: (other, id) => guarded(async () => {
+      try { await fsCommit([W.del('dms/' + api.chatIdWith(other) + '/messages/' + id)], await token()); } catch (e) { if (!e.notFound) throw e; }
+    }),
+
+    // accounts (moderators)
+    accounts: () => guarded(async () => (await fsQuery('accounts', 'createdAt', false, 1000, 0, await token())).map((d) => ({
+      id: d.id, displayName: str(d, 'displayName'), role: str(d, 'role'), keyGen: num(d, 'keyGen'), disabled: bool(d, 'disabled'),
+    }))),
+
+    async createAccount(userTyped, nameTyped, mod) {
+      const username = normUser(userTyped), dn = (nameTyped || '').trim();
+      if (!userOk(username)) throw new ApiError(400, 'INPUT', 'Username: 3-20 characters, only a-z, 0-9 and _.');
+      if (!dn || dn.length > 40) throw new ApiError(400, 'INPUT', 'Enter a display name (max 40).');
+      return guarded(async () => {
+        if (await fsGet('accounts/' + username, await token())) throw new ApiError(409, 'TAKEN', 'That username is already taken.');
+        const key = newKey();
+        await fsCommit([
+          W.create('accounts/' + username, { displayName: dn, role: mod ? 'mod' : 'user', keyGen: int(1), disabled: false }, 'createdAt'),
+          W.create('invites/' + key, { accountId: username, gen: int(1), used: false }, 'createdAt'),
+        ], await token());
+        return key;
+      });
+    },
+
+    async updateAccount(id, nameTyped, mod, disabled) {
+      const dn = (nameTyped || '').trim();
+      if (!dn || dn.length > 40) throw new ApiError(400, 'INPUT', 'Enter a display name (max 40).');
+      if (id === me.accountId && (!mod || disabled)) throw new ApiError(400, 'INPUT', 'You can’t remove your own moderator rights or disable yourself.');
+      await guarded(async () => {
+        await fsCommit([W.update('accounts/' + id, { displayName: dn, role: mod ? 'mod' : 'user', disabled })], await token());
+      });
+      if (id === me.accountId) { me.displayName = dn; await persist(); }
+    },
+
+    /** Unused keys, moderators only: {accountId: {key, gen}} (latest per account). */
+    pendingKeys: () => guarded(async () => {
+      const out = {};
+      for (const d of await fsQueryX('invites', { eq: ['used', false], limit: 5000 }, await token())) {
+        const a = str(d, 'accountId'), g = num(d, 'gen');
+        if (!out[a] || out[a].gen < g) out[a] = { key: d.id, gen: g };
+      }
+      return out;
+    }),
+
+    regenerateKey: (id) => guarded(async () => {
+      const acc = await fsGet('accounts/' + id, await token());
+      if (!acc) throw new ApiError(404, 'GONE', 'That account no longer exists.');
+      const next = num(acc, 'keyGen') + 1;
+      const key = newKey();
+      await fsCommit([
+        W.update('accounts/' + id, { keyGen: int(next) }),
+        W.create('invites/' + key, { accountId: id, gen: int(next), used: false }, 'createdAt'),
+      ], await token());
+      return key;
+    }),
+
+    async deleteAccount(id) {
+      if (id === me.accountId) throw new ApiError(400, 'INPUT', 'You can’t delete your own account.');
+      await guarded(async () => {
+        try { await fsCommit([W.del('accounts/' + id)], await token()); } catch (e) { if (!e.notFound) throw e; }
+      });
+    },
+  };
+  function toMsg(d) {
+    return { id: d.id, text: str(d, 'text'), senderId: str(d, 'senderId'), senderName: str(d, 'senderName'), createdAt: ts(d, 'createdAt') };
+  }
+  return api;
+})();
+
+// ---------------------------------------------------------------- photos: shrink on the device
+const PHOTO_MAX_CHARS = 700000;   // base64 size limit for a full photo (~520 KB JPEG)
+const THUMB_MAX_CHARS = 55000;
+
+async function loadImage(file) {
+  if (window.createImageBitmap) {
+    try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (e) { /* fall back */ }
+  }
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('bad image'));
+      img.src = r.result;
+    };
+    r.onerror = () => reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+function encodeJpeg(img, maxSide, maxChars, startQuality) {
+  const w0 = img.width, h0 = img.height;
+  let scale = Math.min(1, maxSide / Math.max(w0, h0));
+  let q = startQuality;
+  for (let i = 0; i < 12; i++) {
+    const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, w, h);
+    g.drawImage(img, 0, 0, w, h);
+    const b64 = c.toDataURL('image/jpeg', q).split(',')[1] || '';
+    if (b64.length <= maxChars) return b64;
+    if (q > 0.5) q -= 0.1; else scale *= 0.8;
+  }
+  throw new Error('Photo too large');
+}
+
+/** File -> {thumb, data} as base64 JPEG (no data: prefix). */
+async function processPhoto(file) {
+  const img = await loadImage(file);
+  try {
+    return { data: encodeJpeg(img, 1600, PHOTO_MAX_CHARS, 0.78), thumb: encodeJpeg(img, 360, THUMB_MAX_CHARS, 0.7) };
+  } finally {
+    if (img.close) img.close();
+  }
+}
+const jpegUrl = (b64) => 'data:image/jpeg;base64,' + b64;
+
+// ---------------------------------------------------------------- geocoding (OpenStreetMap)
+async function geoSearch(q) {
+  const arr = await http('GET', GEO_BASE + '/search?format=jsonv2&limit=5&q=' + encodeURIComponent(q), null, null, null);
+  return (Array.isArray(arr) ? arr : []).map((o) => ({ label: o.display_name || q, lat: Number(o.lat), lng: Number(o.lon) }))
+    .filter((r) => isFinite(r.lat) && isFinite(r.lng));
+}
+async function geoReverse(lat, lng) {
+  try {
+    const o = await http('GET', GEO_BASE + '/reverse?format=jsonv2&lat=' + lat.toFixed(6) + '&lon=' + lng.toFixed(6), null, null, null);
+    return (o && o.display_name) || '';
+  } catch (e) { return ''; }
+}
+
+// ---------------------------------------------------------------- DOM helpers
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    for (const k of Object.keys(attrs)) {
+      const v = attrs[k];
+      if (v === undefined || v === null || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else if (k === 'text') e.textContent = v;
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+  }
+  for (const c of kids.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+const $ = (id) => document.getElementById(id);
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/** Modal dialog. buttons: [{label, kind, value, keepOpen, onClick}] -> Promise of chosen value. */
+function dialog(title, body, buttons, opts) {
+  return new Promise((resolve) => {
+    const back = el('div', { class: 'modal-back' });
+    const box = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' });
+    const close = (v) => { back.remove(); resolve(v); };
+    box.appendChild(el('h2', { text: title }));
+    if (typeof body === 'string') box.appendChild(el('p', { class: 'muted', text: body }));
+    else if (body) box.appendChild(body);
+    const row = el('div', { class: 'modal-actions' });
+    for (const b of buttons) {
+      const btn = el('button', { class: 'btn ' + (b.kind || 'outline'), type: 'button', text: b.label });
+      btn.addEventListener('click', async () => {
+        if (b.onClick) {
+          btn.disabled = true;
+          try {
+            const r = await b.onClick();
+            if (r !== false && !b.keepOpen) close(b.value === undefined ? r : b.value);
+          } finally { btn.disabled = false; }
+        } else if (!b.keepOpen) close(b.value);
+      });
+      row.appendChild(btn);
+    }
+    box.appendChild(row);
+    back.appendChild(box);
+    if (!(opts && opts.sticky)) back.addEventListener('click', (e) => { if (e.target === back) close(undefined); });
+    document.body.appendChild(back);
+    const first = box.querySelector('input');
+    if (first) setTimeout(() => first.focus(), 50);
+  });
+}
+const confirmDialog = (title, msg, yes, danger) =>
+  dialog(title, msg, [{ label: 'Cancel', value: false }, { label: yes, kind: danger ? 'danger' : 'primary', value: true }]);
+
+function relTime(ms) {
+  if (!ms) return '';
+  const s = Math.round((Date.now() - ms) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+  if (s < 86400 * 7) return Math.floor(s / 86400) + ' d ago';
+  return new Date(ms).toLocaleDateString();
+}
+function msgTime(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  const t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === new Date().toDateString() ? t : d.toLocaleDateString() + ' ' + t;
+}
+
+function handleError(e) {
+  if (e && e.status === SIGNED_OUT) {
+    if (state.keepKeyOnScreen) return;
+    showLogin(e.message);
+    return;
+  }
+  toast((e && e.message) || 'Something went wrong.');
+  if (!(e instanceof ApiError)) console.error(e);
+}
+
+// ---------------------------------------------------------------- state
+const state = {
+  tab: 'map', places: [], visits: [], messages: [], accounts: [], filter: 'all',
+  openPlaceId: null, openPhotos: null, viewerIndex: 0,
+  chat: null, inbox: [], people: [], groupLast: null, loadingInbox: false,
+  map: null, markers: new Map(), meMarker: null, positioned: false,
+  loadingPlaces: false, loadingMessages: false, keepKeyOnScreen: false,
+  chatTimer: null, placesTimer: null,
+  follow: false, geoWatch: null,
+};
+
+
+// ---------------------------------------------------------------- login screen
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const STANDALONE = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+
+function showLogin(message) {
+  stopTimers();
+  $('ios-tip').hidden = !(IS_IOS && !STANDALONE);
+  document.body.classList.remove('in-app');
+  $('app').hidden = true;
+  $('login').hidden = false;
+  $('login-info').hidden = !message;
+  $('login-info').textContent = message || '';
+  $('setup-card').hidden = true;
+  $('login-form').hidden = false;
+  if (!CONFIGURED) {
+    $('login-form').hidden = true;
+    $('login-info').hidden = false;
+    $('login-info').textContent = 'This copy isn’t configured yet: put your Firebase Web API key and Project ID in the two <meta> lines at the top of index.html (see the setup guide).';
+    return;
+  }
+  Repo.isSetupDone().then((done) => {
+    if (!done) { $('setup-card').hidden = false; $('login-form').hidden = true; }
+  }).catch((e) => {
+    $('login-info').hidden = false;
+    $('login-info').textContent = e.denied
+      ? 'Firebase refused access. Make sure the security rules from the setup guide are published.'
+      : e.message;
+  });
+}
+
+function setLoginBusy(b) {
+  for (const id of ['login-btn', 'setup-btn']) $(id).disabled = b;
+  $('login-spin').hidden = !b;
+}
+
+async function doLogin(ev) {
+  ev.preventDefault();
+  setLoginBusy(true);
+  try {
+    await Repo.login($('login-user').value, $('login-key').value);
+    $('login-key').value = '';
+    enterApp();
+  } catch (e) {
+    $('login-info').hidden = false;
+    $('login-info').textContent = e.message;
+  } finally { setLoginBusy(false); }
+}
+
+async function doSetup(ev) {
+  ev.preventDefault();
+  setLoginBusy(true);
+  try {
+    await Repo.setupFirstModerator($('setup-user').value, $('setup-name').value);
+    enterApp();
+  } catch (e) {
+    $('login-info').hidden = false;
+    $('login-info').textContent = e.message;
+    if (e.status === 'SETUP_DONE') { $('setup-card').hidden = true; $('login-form').hidden = false; }
+  } finally { setLoginBusy(false); }
+}
+
+// ---------------------------------------------------------------- main app
+function enterApp() {
+  $('login').hidden = true;
+  $('app').hidden = false;
+  document.body.classList.add('in-app');
+  if (!state.map) initMap();
+  updateHeader();
+  selectTab('map');
+  setTimeout(() => state.map.invalidateSize(), 50);
+  Repo.verifySession().then(updateHeader).catch(handleError);
+  loadPlaces();
+  loadInbox();
+  updateLocateBtn();
+  startTimers();
+}
+
+function updateHeader() {
+  const who = $('who');
+  who.textContent = '';
+  who.appendChild(el('span', { text: Repo.myName || '' }));
+  if (Repo.isMod) who.appendChild(el('span', { class: 'mod-tag', text: 'MOD' }));
+  $('tab-accounts').hidden = !Repo.isMod;
+  if (!Repo.isMod && state.tab === 'accounts') selectTab('map');
+}
+
+function selectTab(t) {
+  if (t === 'accounts' && !Repo.isMod) t = 'map';
+  state.tab = t;
+  for (const name of ['map', 'places', 'chat', 'accounts']) {
+    $('page-' + name).hidden = name !== t;
+    $('tab-' + name).classList.toggle('active', name === t);
+  }
+  if (t === 'map') setTimeout(() => state.map && state.map.invalidateSize(), 30);
+  if (t === 'chat') { if (state.chat) loadMessages(true); else loadInbox(); }
+  if (t === 'places') loadPlaces();
+  if (t === 'accounts') loadAccounts();
+}
+
+function startTimers() {
+  stopTimers();
+  let ticks = 0;
+  state.chatTimer = setInterval(() => {
+    if (document.visibilityState !== 'visible' || state.keepKeyOnScreen) return;
+    ticks++;
+    if (state.tab === 'chat' && state.chat) loadMessages(false);
+    else if (state.tab === 'chat' && ticks % 3 === 0) loadInbox();
+    else if (ticks % 12 === 0) loadInbox(); // keeps the unread dot on the Chat tab fresh
+  }, 5000);
+  state.placesTimer = setInterval(() => {
+    if (document.visibilityState === 'visible' && !state.keepKeyOnScreen) loadPlaces();
+  }, 120000);
+}
+function stopTimers() {
+  clearInterval(state.chatTimer);
+  clearInterval(state.placesTimer);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !Repo.loggedIn || $('app').hidden || state.keepKeyOnScreen) return;
+  Repo.verifySession().then(() => {
+    updateHeader();
+    loadPlaces();
+    if (state.tab === 'chat') { if (state.chat) loadMessages(true); else loadInbox(); }
+  }).catch(handleError);
+});
+
+// ---------------------------------------------------------------- map tab
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+function initMap() {
+  const map = L.map('map', { zoomControl: false, worldCopyJump: true, minZoom: 3 }).setView(DEFAULT_CENTER, 5);
+  L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTR }).addTo(map);
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  state.map = map;
+  addLongPress(map, (latlng) => openAddPlace(latlng, true));
+}
+
+/** Long-press on touch screens (iOS Safari has no contextmenu event) and right-click on desktop. */
+function addLongPress(map, cb) {
+  const c = map.getContainer();
+  let timer = null, start = null;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  c.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { cancel(); return; }
+    const t = e.touches[0];
+    start = { x: t.clientX, y: t.clientY };
+    cancel();
+    timer = setTimeout(() => {
+      timer = null;
+      cb(map.mouseEventToLatLng({ clientX: start.x, clientY: start.y }));
+      if (navigator.vibrate) navigator.vibrate(20);
+    }, 600);
+  }, { passive: true });
+  c.addEventListener('touchmove', (e) => {
+    if (!timer || !start) return;
+    const t = e.touches[0];
+    if (e.touches.length !== 1 || Math.abs(t.clientX - start.x) > 10 || Math.abs(t.clientY - start.y) > 10) cancel();
+  }, { passive: true });
+  c.addEventListener('touchend', cancel, { passive: true });
+  c.addEventListener('touchcancel', cancel, { passive: true });
+  map.on('contextmenu', (e) => { if (!('ontouchstart' in window)) cb(e.latlng); });
+}
+
+const visitsOf = (placeId) => state.visits.filter((v) => v.placeId === placeId);
+const iVisited = (placeId) => state.visits.some((v) => v.placeId === placeId && v.accountId === Repo.myId);
+
+function pinIcon(kind) {
+  // kind: 'been' (you checked in), 'mine' (you added it), '' (other)
+  return L.divIcon({
+    className: '', iconSize: [30, 40], iconAnchor: [15, 40],
+    html: '<div class="pin ' + kind + '"><span>' + (kind === 'been' ? '✓' : '') + '</span></div>',
+  });
+}
+// ---------------------------------------------------------------- moderator tag
+const isModId = (id) => (id === Repo.myId ? Repo.isMod : (state.people || []).some((p) => p.id === id && p.role === 'mod'));
+const modTag = (id) => (isModId(id) ? el('span', { class: 'mod-tag', text: 'MOD' }) : null);
+/** A name with a MOD tag after it when that person is a moderator. */
+function nameEl(id, name, cls) { return el('span', { class: 'name-line' + (cls ? ' ' + cls : '') }, el('span', { text: name }), modTag(id)); }
+
+const pinKind = (p) => (iVisited(p.id) ? 'been' : (p.ownerId === Repo.myId ? 'mine' : ''));
+
+// ---------------------------------------------------------------- theme
+function currentTheme() {
+  try { return localStorage.getItem('pm_theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; }
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', t === 'light' ? '#FFFFFF' : '#0E1013');
+  try { localStorage.setItem('pm_theme', t); } catch (e) { /* ignore */ }
+}
+
+function refreshMarkers() {
+  const map = state.map;
+  const seen = new Set();
+  for (const p of state.places) {
+    seen.add(p.id);
+    let m = state.markers.get(p.id);
+    const kind = pinKind(p);
+    if (!m) {
+      m = L.marker([p.lat, p.lng], { icon: pinIcon(kind), title: p.name }).addTo(map);
+      m._kind = kind;
+      state.markers.set(p.id, m);
+    } else {
+      m.setLatLng([p.lat, p.lng]);
+      if (m._kind !== kind) { m.setIcon(pinIcon(kind)); m._kind = kind; }
+    }
+    m.off('click');
+    m.on('click', () => openPlace(p.id));
+  }
+  for (const [id, m] of state.markers) {
+    if (!seen.has(id)) { m.remove(); state.markers.delete(id); }
+  }
+  if (!state.positioned && state.places.length) {
+    state.positioned = true;
+    if (state.places.length === 1) map.setView([state.places[0].lat, state.places[0].lng], 15);
+    else map.fitBounds(L.latLngBounds(state.places.map((p) => [p.lat, p.lng])).pad(0.15), { maxZoom: 16 });
+  }
+}
+
+function showPlaceOnMap(p) {
+  closePlace();
+  selectTab('map');
+  state.positioned = true;
+  setTimeout(() => state.map.setView([p.lat, p.lng], 17), 60);
+}
+
+// ---------------------------------------------------------------- locator + live location
+function meIcon() {
+  return L.divIcon({ className: '', iconSize: [20, 20], iconAnchor: [10, 10], html: '<div class="me-dot"></div>' });
+}
+
+function setMeMarker(lat, lng) {
+  if (!state.meMarker) state.meMarker = L.marker([lat, lng], { icon: meIcon(), zIndexOffset: 1000, interactive: false }).addTo(state.map);
+  else state.meMarker.setLatLng([lat, lng]);
+}
+
+function ensureGeoWatch() {
+  if (state.geoWatch != null || !navigator.geolocation) return;
+  state.geoWatch = navigator.geolocation.watchPosition((pos) => {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    setMeMarker(lat, lng);
+    if (state.follow) state.map.setView([lat, lng], Math.max(state.map.getZoom(), 16));
+  }, (err) => {
+    if (err.code === 1) {
+      state.follow = false;
+      updateLocateBtn();
+      toast('Location access is off. Allow it in Settings > Privacy & Security > Location Services > Safari Websites.');
+    }
+    stopGeoWatchIfIdle();
+  }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 });
+}
+function stopGeoWatchIfIdle() {
+  if (state.follow) return;
+  if (state.geoWatch != null) { navigator.geolocation.clearWatch(state.geoWatch); state.geoWatch = null; }
+  if (state.meMarker) { state.meMarker.remove(); state.meMarker = null; }
+}
+
+function updateLocateBtn() {
+  const b = $('fab-locate');
+  if (b) b.classList.toggle('active', state.follow);
+}
+
+function tapLocate() {
+  if (!navigator.geolocation) { toast('This browser can’t share your location.'); return; }
+  if (state.follow) { state.follow = false; updateLocateBtn(); stopGeoWatchIfIdle(); return; }
+  state.follow = true;
+  updateLocateBtn();
+  ensureGeoWatch();
+  if (state.meMarker) { state.positioned = true; state.map.setView(state.meMarker.getLatLng(), 16); }
+  else {
+    toast('Finding your location…');
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setMeMarker(pos.coords.latitude, pos.coords.longitude);
+      state.positioned = true;
+      if (state.follow) state.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+    }, (err) => {
+      state.follow = false; updateLocateBtn();
+      toast(err.code === 1 ? 'Location access is off for this site.' : 'Couldn’t get your location.');
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  }
+}
+
+async function loadPlaces() {
+  if (state.loadingPlaces || !Repo.loggedIn) return;
+  state.loadingPlaces = true;
+  try {
+    const [places, visits] = await Promise.all([Repo.places(), Repo.visits()]);
+    state.places = places;
+    state.visits = visits;
+    refreshMarkers();
+    renderPlaces();
+    if (state.openPlaceId) renderPlaceInfo();
+  } catch (e) { handleError(e); } finally { state.loadingPlaces = false; }
+}
+
+// ---------------------------------------------------------------- place detail
+function openPlace(id) {
+  const p = state.places.find((x) => x.id === id);
+  if (!p) return;
+  state.openPlaceId = id;
+  state.openPhotos = null;
+  $('place-sheet').hidden = false;
+  $('place-sheet').querySelector('.sheet-body').scrollTop = 0;
+  renderPlaceInfo();
+  loadPlacePhotos(id);
+}
+function closePlace() {
+  state.openPlaceId = null;
+  $('place-sheet').hidden = true;
+}
+
+function directionsUrl(p) {
+  return IS_IOS
+    ? 'https://maps.apple.com/?daddr=' + p.lat + ',' + p.lng
+    : 'https://www.google.com/maps/dir/?api=1&destination=' + p.lat + ',' + p.lng;
+}
+
+function renderPlaceInfo() {
+  const p = state.places.find((x) => x.id === state.openPlaceId);
+  if (!p) { closePlace(); return; }
+  const mine = p.ownerId === Repo.myId;
+  const been = iVisited(p.id);
+  const vs = visitsOf(p.id);
+  $('place-title').textContent = p.name;
+  const box = $('place-info');
+  box.textContent = '';
+  box.appendChild(el('div', { class: 'detail-meta' },
+    p.address ? el('div', { class: 'addr', text: p.address }) : null,
+    el('div', { class: 'muted small' }, mine ? 'Added by you' : 'Added by ', mine ? null : nameEl(p.ownerId, p.ownerName),
+      (p.createdAt ? ' · ' + relTime(p.createdAt) : '') + ' · ' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5))));
+  if (p.note) box.appendChild(el('div', { class: 'detail-note', text: p.note }));
+
+  const beenBtn = el('button', {
+    class: 'btn big ' + (been ? 'been' : 'primary'), type: 'button',
+    text: been ? '✓  You’ve been here' : 'I’ve been here',
+    onclick: async () => {
+      beenBtn.disabled = true;
+      try {
+        await Repo.setVisited(p.id, !been);
+        toast(been ? 'Check-in removed.' : 'Checked in. Nice explore!');
+        state.visits = await Repo.visits();
+        refreshMarkers();
+        renderPlaces();
+        renderPlaceInfo();
+      } catch (e) { handleError(e); beenBtn.disabled = false; }
+    },
+  });
+  box.appendChild(beenBtn);
+
+  const who = el('div', { class: 'visitors' },
+    el('div', { class: 'section-label', text: vs.length ? 'Been here (' + vs.length + ')' : 'Nobody has checked in yet' }));
+  if (vs.length) {
+    const chips = el('div', { class: 'chips' });
+    for (const v of vs.slice().sort((a, b) => b.createdAt - a.createdAt)) {
+      chips.appendChild(el('span', { class: 'chip' + (v.accountId === Repo.myId ? ' me' : ''), title: relTime(v.createdAt) },
+        v.accountId === Repo.myId ? 'You' : v.name, modTag(v.accountId)));
+    }
+    who.appendChild(chips);
+  }
+  box.appendChild(who);
+
+  const actions = el('div', { class: 'row gap detail-actions' },
+    el('button', { class: 'btn small outline', type: 'button', text: 'Show on map', onclick: () => showPlaceOnMap(p) }),
+    el('a', { class: 'btn small outline', href: directionsUrl(p), target: '_blank', rel: 'noopener', text: 'Directions' }),
+    (mine || Repo.isMod) ? el('button', {
+      class: 'btn small danger-outline', type: 'button', text: mine ? 'Delete place' : 'Delete (mod)',
+      onclick: async () => {
+        if (!(await confirmDialog('Delete place?', '“' + p.name + '” and all its photos and check-ins will be removed for everyone.', 'Delete', true))) return;
+        try { await Repo.deletePlace(p.id); closePlace(); toast('Deleted.'); loadPlaces(); } catch (e) { handleError(e); }
+      },
+    }) : null);
+  box.appendChild(actions);
+}
+
+async function loadPlacePhotos(id) {
+  const grid = $('place-photos');
+  grid.textContent = '';
+  grid.appendChild(el('div', { class: 'photo-loading', text: 'Loading photos…' }));
+  try {
+    const photos = await Repo.photosOf(id);
+    if (state.openPlaceId !== id) return;
+    state.openPhotos = photos;
+    renderPlacePhotos();
+  } catch (e) {
+    grid.textContent = '';
+    handleError(e);
+  }
+}
+
+function renderPlacePhotos() {
+  const grid = $('place-photos');
+  grid.textContent = '';
+  const photos = state.openPhotos || [];
+  photos.forEach((ph, i) => {
+    const img = el('img', { src: jpegUrl(ph.thumb), alt: 'Photo by ' + ph.ownerName, loading: 'lazy' });
+    grid.appendChild(el('button', { class: 'photo', type: 'button', onclick: () => openViewer(i) }, img));
+  });
+  grid.appendChild(el('button', { class: 'photo add', type: 'button', onclick: () => $('place-file').click() },
+    el('span', { class: 'plus', text: '+' }), el('span', { text: 'Add photos' })));
+  $('place-photo-count').textContent = photos.length ? photos.length + (photos.length === 1 ? ' photo' : ' photos') : 'No photos yet';
+}
+
+async function uploadPhotos(placeId, files, progressEl) {
+  let done = 0, failed = 0, firstThumb = '';
+  for (const f of files) {
+    if (progressEl) progressEl.textContent = 'Uploading photo ' + (done + failed + 1) + ' of ' + files.length + '…';
+    try {
+      const ph = f.thumb ? f : await processPhoto(f);
+      await Repo.addPhoto(placeId, ph);
+      if (!firstThumb) firstThumb = ph.thumb;
+      done++;
+    } catch (e) {
+      failed++;
+      if (e && e.status === SIGNED_OUT) throw e;
+    }
+  }
+  if (progressEl) progressEl.textContent = '';
+  return { done, failed, firstThumb };
+}
+
+async function addPhotosToOpenPlace(files) {
+  const id = state.openPlaceId;
+  if (!id || !files.length) return;
+  const status = $('place-upload');
+  try {
+    const r = await uploadPhotos(id, files, status);
+    const p = state.places.find((x) => x.id === id);
+    if (r.firstThumb && p && p.ownerId === Repo.myId && !p.cover) {
+      try { await Repo.updateCover(id, r.firstThumb); p.cover = r.firstThumb; renderPlaces(); } catch (e) { /* cover is optional */ }
+    }
+    toast(r.failed ? r.done + ' added, ' + r.failed + ' failed.' : (r.done === 1 ? 'Photo added.' : r.done + ' photos added.'));
+    if (state.openPlaceId === id) loadPlacePhotos(id);
+  } catch (e) { handleError(e); }
+}
+
+// ---------------------------------------------------------------- photo viewer
+function openViewer(index) {
+  state.viewerIndex = index;
+  $('viewer').hidden = false;
+  showViewerPhoto();
+}
+function closeViewer() { $('viewer').hidden = true; $('viewer-img').removeAttribute('src'); }
+
+async function showViewerPhoto() {
+  const photos = state.openPhotos || [];
+  const i = state.viewerIndex;
+  const ph = photos[i];
+  if (!ph) { closeViewer(); return; }
+  const p = state.places.find((x) => x.id === ph.placeId);
+  const canDelete = ph.ownerId === Repo.myId || Repo.isMod || (p && p.ownerId === Repo.myId);
+  $('viewer-img').src = jpegUrl(ph.thumb); // blurry preview while the full photo loads
+  $('viewer-img').classList.add('loading');
+  $('viewer-caption').textContent = (ph.ownerId === Repo.myId ? 'You' : ph.ownerName) + (isModId(ph.ownerId) ? ' (MOD)' : '') + ' · ' + relTime(ph.createdAt) + '   ' + (i + 1) + ' / ' + photos.length;
+  $('viewer-delete').hidden = !canDelete;
+  $('viewer-prev').hidden = i === 0;
+  $('viewer-next').hidden = i >= photos.length - 1;
+  try {
+    const data = await Repo.photoData(ph.id);
+    if (state.viewerIndex !== i || $('viewer').hidden) return;
+    if (data) $('viewer-img').src = jpegUrl(data);
+  } catch (e) { handleError(e); } finally { $('viewer-img').classList.remove('loading'); }
+}
+
+async function deleteViewerPhoto() {
+  const ph = (state.openPhotos || [])[state.viewerIndex];
+  if (!ph) return;
+  if (!(await confirmDialog('Delete photo?', 'It will be removed for everyone.', 'Delete', true))) return;
+  try {
+    await Repo.deletePhoto(ph.id);
+    state.openPhotos.splice(state.viewerIndex, 1);
+    renderPlacePhotos();
+    if (!state.openPhotos.length) closeViewer();
+    else { state.viewerIndex = Math.min(state.viewerIndex, state.openPhotos.length - 1); showViewerPhoto(); }
+    toast('Photo deleted.');
+  } catch (e) { handleError(e); }
+}
+
+// ---------------------------------------------------------------- add place sheet
+let addMap = null, addPin = null, addAddress = '', lookupSeq = 0, addPhotos = [];
+
+function openAddPlace(latlng, pinNow) {
+  const sheet = $('add-sheet');
+  sheet.hidden = false;
+  $('add-name').value = '';
+  $('add-note').value = '';
+  $('add-search').value = '';
+  $('add-been').checked = true;
+  $('add-results').hidden = true;
+  $('add-results').textContent = '';
+  $('add-progress').textContent = '';
+  $('add-addr').textContent = 'Search an address or tap the map to drop the pin. Drag the pin to adjust.';
+  addAddress = '';
+  addPhotos = [];
+  renderAddPhotos();
+  const center = latlng || state.map.getCenter();
+  const zoom = Math.max(state.map.getZoom(), 15);
+  if (!addMap) {
+    addMap = L.map('add-map', { zoomControl: false, minZoom: 3 });
+    L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTR }).addTo(addMap);
+    L.control.zoom({ position: 'topright' }).addTo(addMap);
+    addMap.on('click', (e) => { $('add-results').hidden = true; setAddPin(e.latlng, null); });
+  }
+  if (addPin) { addPin.remove(); addPin = null; }
+  addMap.setView(center, zoom);
+  setTimeout(() => addMap.invalidateSize(), 50);
+  if (pinNow && latlng) setAddPin(latlng, null);
+}
+
+function setAddPin(latlng, knownAddress) {
+  const ll = L.latLng(latlng);
+  if (!addPin) {
+    addPin = L.marker(ll, { icon: pinIcon('mine'), draggable: true }).addTo(addMap);
+    addPin.on('dragend', () => setAddPin(addPin.getLatLng(), null));
+  } else addPin.setLatLng(ll);
+  const seq = ++lookupSeq;
+  if (knownAddress != null) {
+    addAddress = knownAddress;
+    $('add-addr').textContent = '📍 ' + knownAddress;
+    return;
+  }
+  addAddress = '';
+  const coords = ll.lat.toFixed(5) + ', ' + ll.lng.toFixed(5);
+  $('add-addr').textContent = '📍 ' + coords + ' (looking up address…)';
+  geoReverse(ll.lat, ll.lng).then((a) => {
+    if (seq !== lookupSeq) return;
+    addAddress = a;
+    $('add-addr').textContent = '📍 ' + (a || coords);
+  });
+}
+
+async function doAddSearch(ev) {
+  if (ev) ev.preventDefault();
+  const q = $('add-search').value.trim();
+  if (!q) return;
+  $('add-search').blur();
+  const btn = $('add-find');
+  btn.disabled = true;
+  try {
+    const list = await geoSearch(q);
+    const box = $('add-results');
+    box.textContent = '';
+    if (!list.length) box.appendChild(el('div', { class: 'result muted', text: 'No address found. Try adding the city, or tap the map instead.' }));
+    const pick = (r) => {
+      box.hidden = true;
+      addMap.setView([r.lat, r.lng], 17);
+      setAddPin([r.lat, r.lng], r.label);
+    };
+    if (list.length === 1) { pick(list[0]); return; }
+    for (const r of list) box.appendChild(el('button', { class: 'result', type: 'button', text: r.label, onclick: () => pick(r) }));
+    box.hidden = false;
+  } catch (e) {
+    toast(e.message || 'Address search failed.');
+  } finally { btn.disabled = false; }
+}
+
+async function onAddFiles(files) {
+  const list = Array.from(files || []).slice(0, 20 - addPhotos.length);
+  if (!list.length) return;
+  $('add-progress').textContent = 'Preparing photos…';
+  for (const f of list) {
+    try { addPhotos.push(await processPhoto(f)); } catch (e) { toast('One photo couldn’t be read and was skipped.'); }
+    renderAddPhotos();
+  }
+  $('add-progress').textContent = '';
+}
+
+function renderAddPhotos() {
+  const box = $('add-photos');
+  box.textContent = '';
+  addPhotos.forEach((ph, i) => {
+    box.appendChild(el('div', { class: 'photo' },
+      el('img', { src: jpegUrl(ph.thumb), alt: 'Selected photo' }),
+      el('button', { class: 'photo-x', type: 'button', 'aria-label': 'Remove photo', text: '×', onclick: () => { addPhotos.splice(i, 1); renderAddPhotos(); } })));
+  });
+  box.appendChild(el('button', { class: 'photo add', type: 'button', onclick: () => $('add-file').click() },
+    el('span', { class: 'plus', text: '+' }), el('span', { text: addPhotos.length ? 'More' : 'Add photos' })));
+}
+
+async function doAddSave() {
+  const name = $('add-name').value.trim();
+  if (!name) { toast('Give the place a name.'); $('add-name').focus(); return; }
+  if (!addPin) { toast('Put the place on the map first: search an address or tap the map.'); return; }
+  const ll = addPin.getLatLng();
+  const btn = $('add-save');
+  btn.disabled = true;
+  try {
+    const photos = addPhotos.slice();
+    const id = await Repo.addPlace(name, addAddress, $('add-note').value, ll.lat, ll.lng, {
+      cover: photos.length ? photos[0].thumb : '', visited: $('add-been').checked,
+    });
+    let msg = 'Place added.';
+    if (photos.length) {
+      const r = await uploadPhotos(id, photos, $('add-progress'));
+      msg = r.failed ? 'Place added; ' + r.failed + ' photo(s) failed to upload.' : 'Place added with ' + r.done + (r.done === 1 ? ' photo.' : ' photos.');
+    }
+    $('add-sheet').hidden = true;
+    addPhotos = [];
+    toast(msg);
+    state.positioned = true;
+    selectTab('map');
+    await loadPlaces();
+    state.map.setView(ll, Math.max(state.map.getZoom(), 15));
+    openPlace(id);
+  } catch (e) { handleError(e); } finally { btn.disabled = false; $('add-progress').textContent = ''; }
+}
+
+// ---------------------------------------------------------------- places tab
+const FILTERS = { all: 'All', mine: 'Mine', been: 'Been', todo: 'Not yet' };
+
+function renderPlaces() {
+  const f = state.filter || 'all';
+  for (const k of Object.keys(FILTERS)) {
+    const b = $('filter-' + k);
+    if (b) b.classList.toggle('active', k === f);
+  }
+  const list = state.places.filter((p) => {
+    if (f === 'mine') return p.ownerId === Repo.myId;
+    if (f === 'been') return iVisited(p.id);
+    if (f === 'todo') return !iVisited(p.id);
+    return true;
+  });
+  const beenCount = state.places.filter((p) => iVisited(p.id)).length;
+  $('places-count').textContent = state.places.length + (state.places.length === 1 ? ' place' : ' places') + ' · you’ve been to ' + beenCount;
+  $('places-empty').hidden = list.length > 0;
+  $('places-empty').textContent = state.places.length ? 'Nothing here with this filter.' : 'No places yet. Tap “+ Add” or long-press the map.';
+  const box = $('places-list');
+  box.textContent = '';
+  for (const p of list) {
+    const vs = visitsOf(p.id);
+    const been = iVisited(p.id);
+    box.appendChild(el('button', { class: 'place-card' + (been ? ' been' : ''), type: 'button', onclick: () => openPlace(p.id) },
+      p.cover ? el('img', { class: 'cover', src: jpegUrl(p.cover), alt: '' }) : el('div', { class: 'cover empty', text: '🏚' }),
+      el('div', { class: 'place-text' },
+        el('div', { class: 'card-title', text: p.name }),
+        p.address ? el('div', { class: 'muted small clamp', text: p.address }) : null,
+        el('div', { class: 'small tags' },
+          been ? el('span', { class: 'tag been', text: '✓ Been' }) : null,
+          el('span', { class: 'tag', text: vs.length + ' check-in' + (vs.length === 1 ? '' : 's') }),
+          p.ownerId === Repo.myId ? el('span', { class: 'muted', text: 'by you' })
+            : el('span', { class: 'muted' }, 'by ', nameEl(p.ownerId, p.ownerName))))));
+  }
+}
+
+// ---------------------------------------------------------------- chat tab
+// state.chat = null (chat list) | {kind:'group'} | {kind:'dm', other, name}
+const chatKey = (c) => (c.kind === 'group' ? 'group' : 'dm:' + c.other);
+function seenAt(key) { try { return Number(localStorage.getItem('pm_seen_' + Repo.myId + '_' + key) || 0); } catch (e) { return 0; } }
+function markSeen(key, ms) { try { if (ms > seenAt(key)) localStorage.setItem('pm_seen_' + Repo.myId + '_' + key, String(ms)); } catch (e) { /* ignore */ } }
+
+async function loadInbox() {
+  if (state.loadingInbox || !Repo.loggedIn) return;
+  state.loadingInbox = true;
+  try {
+    // The member list changes rarely: refresh it at most every 5 minutes.
+    const needPeople = !state.peopleAt || Date.now() - state.peopleAt > 300000;
+    const [inbox, last, people] = await Promise.all([Repo.inbox(), Repo.lastMessage(), needPeople ? Repo.accounts() : Promise.resolve(state.people)]);
+    state.inbox = inbox;
+    state.groupLast = last;
+    state.people = people;
+    if (needPeople) { state.peopleAt = Date.now(); renderPlaces(); if (state.openPlaceId) renderPlaceInfo(); }
+    renderChatHome();
+    updateChatBadge();
+  } catch (e) { handleError(e); } finally { state.loadingInbox = false; }
+}
+
+function updateChatBadge() {
+  const g = state.groupLast;
+  let unread = g && g.senderId !== Repo.myId && g.createdAt > seenAt('group') ? 1 : 0;
+  for (const c of state.inbox || []) if (c.lastFrom !== Repo.myId && c.lastAt > seenAt('dm:' + c.other)) unread++;
+  $('tab-chat').classList.toggle('dot', unread > 0);
+}
+
+function initials(name) { return (name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase(); }
+
+function chatRow(title, sub, time, unread, onclick, avatar, personId) {
+  return el('button', { class: 'chat-row' + (unread ? ' unread' : ''), type: 'button', onclick },
+    el('div', { class: 'avatar' + (avatar === '#' ? ' group' : ''), text: avatar === '#' ? '#' : initials(avatar) }),
+    el('div', { class: 'grow' },
+      el('div', { class: 'row' }, (personId ? el('div', { class: 'chat-title grow' }, nameEl(personId, title)) : el('div', { class: 'chat-title grow', text: title })), el('div', { class: 'muted small', text: time })),
+      el('div', { class: 'row' }, el('div', { class: 'muted small clamp1 grow', text: sub }), unread ? el('span', { class: 'unread-dot' }) : null)));
+}
+
+function renderChatHome() {
+  const box = $('chat-rows');
+  box.textContent = '';
+  const active = (state.people || []).filter((p) => !p.disabled).length;
+  const g = state.groupLast;
+  box.appendChild(chatRow('Everyone', g ? (g.senderId === Repo.myId ? 'You: ' : g.senderName + ': ') + g.text : active + ' members',
+    g ? relTime(g.createdAt) : '', !!(g && g.senderId !== Repo.myId && g.createdAt > seenAt('group')),
+    () => openChat({ kind: 'group' }), '#'));
+  const inbox = state.inbox || [];
+  if (inbox.length) box.appendChild(el('div', { class: 'section-label', text: 'Private' }));
+  for (const c of inbox) {
+    const person = (state.people || []).find((p) => p.id === c.other);
+    const name = person ? person.displayName : c.otherName;
+    box.appendChild(chatRow(name, (c.lastFrom === Repo.myId ? 'You: ' : '') + c.lastText, relTime(c.lastAt),
+      c.lastFrom !== Repo.myId && c.lastAt > seenAt('dm:' + c.other), () => openChat({ kind: 'dm', other: c.other, name }), name, c.other));
+  }
+}
+
+async function newDmPicker() {
+  try { state.people = await Repo.accounts(); state.peopleAt = Date.now(); } catch (e) { handleError(e); return; }
+  const people = (state.people || []).filter((p) => p.id !== Repo.myId && !p.disabled)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const list = el('div', { class: 'picker' });
+  if (!people.length) list.appendChild(el('p', { class: 'muted', text: 'No one else here yet.' }));
+  let close;
+  for (const p of people) {
+    list.appendChild(el('button', { class: 'chat-row', type: 'button', onclick: () => { close(); openChat({ kind: 'dm', other: p.id, name: p.displayName }); } },
+      el('div', { class: 'avatar', text: initials(p.displayName) }),
+      el('div', { class: 'grow' }, el('div', { class: 'chat-title' }, nameEl(p.id, p.displayName)), el('div', { class: 'muted small', text: '@' + p.id }))));
+  }
+  const pr = dialog('New message', list, [{ label: 'Cancel', value: null }]);
+  close = () => { const b = document.querySelector('.modal-back:last-of-type'); if (b) b.click(); };
+  return pr;
+}
+
+function openChat(c) {
+  state.chat = c;
+  state.messages = [];
+  $('chat-home').hidden = true;
+  $('chat-convo').hidden = false;
+  $('chat-title').textContent = c.kind === 'group' ? 'Everyone' : c.name;
+  const active = (state.people || []).filter((p) => !p.disabled).length;
+  $('chat-sub').textContent = c.kind === 'group' ? active + ' members' : 'Private · @' + c.other;
+  $('chat-list').textContent = '';
+  $('chat-empty').hidden = true;
+  loadMessages(true);
+}
+
+function closeChat() {
+  state.chat = null;
+  $('chat-convo').hidden = true;
+  $('chat-home').hidden = false;
+  loadInbox();
+}
+
+async function loadMessages(full) {
+  const c = state.chat;
+  if (!c || state.loadingMessages || !Repo.loggedIn) return;
+  state.loadingMessages = true;
+  const last = state.messages[state.messages.length - 1];
+  const since = last ? last.createdAt : 0;
+  const incremental = !full && since > 0;
+  try {
+    let list;
+    if (c.kind === 'group') list = incremental ? await Repo.messagesSince(since) : await Repo.messages();
+    else list = await Repo.dmMessages(c.other, incremental ? since : 0);
+    if (state.chat !== c) return;
+    let next = list;
+    if (incremental) {
+      const ids = new Set(state.messages.map((m) => m.id));
+      next = state.messages.concat(list.filter((m) => !ids.has(m.id)));
+    }
+    const changed = next.length !== state.messages.length || next.some((m, i) => m.id !== state.messages[i].id);
+    state.messages = next;
+    if (changed || full) renderMessages();
+    const lastMsg = next[next.length - 1];
+    if (lastMsg) markSeen(chatKey(c), lastMsg.createdAt);
+  } catch (e) { handleError(e); } finally { state.loadingMessages = false; }
+}
+
+function renderMessages() {
+  const box = $('chat-list');
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.textContent = '';
+  $('chat-empty').hidden = state.messages.length > 0;
+  const group = state.chat && state.chat.kind === 'group';
+  for (const m of state.messages) {
+    const mine = m.senderId === Repo.myId;
+    const canDelete = mine || (group && Repo.isMod);
+    const bubble = el('div', { class: 'bubble' + (mine ? ' mine' : '') },
+      mine || !group ? null : el('div', { class: 'sender' }, nameEl(m.senderId, m.senderName)),
+      el('div', { class: 'text', text: m.text }),
+      el('div', { class: 'time', text: msgTime(m.createdAt) }));
+    if (canDelete) {
+      bubble.classList.add('deletable');
+      bubble.addEventListener('click', async () => {
+        if (!(await confirmDialog('Delete message?', m.text, 'Delete', true))) return;
+        try {
+          if (group) await Repo.deleteMessage(m.id); else await Repo.deleteDm(state.chat.other, m.id);
+          await loadMessages(true);
+        } catch (e) { handleError(e); }
+      });
+    }
+    box.appendChild(el('div', { class: 'msg-row' + (mine ? ' mine' : '') }, bubble));
+  }
+  if (atBottom || state.justSent || !state.scrolledOnce) box.scrollTop = box.scrollHeight;
+  state.justSent = false;
+  state.scrolledOnce = true;
+}
+
+async function doSend(ev) {
+  ev.preventDefault();
+  const c = state.chat;
+  if (!c) return;
+  const input = $('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const btn = $('chat-send');
+  btn.disabled = true;
+  try {
+    if (c.kind === 'group') await Repo.sendMessage(text);
+    else await Repo.sendDm(c.other, c.name, text);
+    input.value = '';
+    autoGrow(input);
+    state.justSent = true;
+    await loadMessages(false);
+  } catch (e) { handleError(e); } finally { btn.disabled = false; }
+}
+function autoGrow(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 120) + 'px'; }
+
+// ---------------------------------------------------------------- accounts tab
+async function loadAccounts() {
+  if (!Repo.isMod) return;
+  try {
+    const [accounts, keys] = await Promise.all([Repo.accounts(), Repo.pendingKeys()]);
+    state.accounts = accounts;
+    state.keys = keys;
+    renderAccounts();
+  } catch (e) { handleError(e); }
+}
+
+function renderAccounts() {
+  const box = $('accounts-list');
+  box.textContent = '';
+  for (const a of state.accounts) {
+    const me = a.id === Repo.myId;
+    const k = (state.keys || {})[a.id];
+    const pending = k && k.gen === a.keyGen ? k.key : null;
+    const sub = '@' + a.id + (a.role === 'mod' ? ' \u00b7 Mod' : '') + (a.disabled ? ' \u00b7 Disabled' : '');
+    box.appendChild(el('div', { class: 'acct' + (a.disabled ? ' off' : '') },
+      el('div', { class: 'grow' },
+        el('div', { class: 'acct-name' }, el('span', { text: a.displayName + (me ? ' (you)' : '') }), a.role === 'mod' ? el('span', { class: 'mod-tag', text: 'MOD' }) : null),
+        el('div', { class: 'muted small', text: sub })),
+      pending ? el('button', {
+        class: 'keychip', type: 'button', title: 'Copy key', text: prettyKey(pending),
+        onclick: async () => {
+          const t = 'Places Map login\nUsername: ' + a.id + '\nKey: ' + prettyKey(pending);
+          try { await navigator.clipboard.writeText(t); toast('Key copied.'); } catch (e) { toast(prettyKey(pending)); }
+        },
+      }) : null,
+      el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Options', text: '\u22ef', onclick: () => accountMenu(a, me) })));
+  }
+}
+
+function accountMenu(a, me) {
+  const buttons = [
+    { label: 'Edit', onClick: () => { setTimeout(() => editAccount(a), 0); return true; } },
+    { label: 'New key', onClick: () => { setTimeout(() => regenerate(a), 0); return true; } },
+  ];
+  if (!me) {
+    buttons.push({
+      label: 'Delete', kind: 'danger-outline', onClick: async () => {
+        setTimeout(async () => {
+          if (!(await confirmDialog('Delete @' + a.id + '?', 'They\u2019re logged out everywhere. Their places stay.', 'Delete', true))) return;
+          try { await Repo.deleteAccount(a.id); toast('Account deleted.'); loadAccounts(); } catch (e) { handleError(e); }
+        }, 0);
+        return true;
+      },
+    });
+  }
+  buttons.push({ label: 'Close', kind: 'primary', value: null });
+  dialog(a.displayName, el('div', { class: 'muted small', text: '@' + a.id }), buttons);
+}
+
+function field(label, input) { return el('label', { class: 'field' }, el('span', { text: label }), input); }
+function check(label, checked, disabled) {
+  const i = el('input', { type: 'checkbox' });
+  i.checked = !!checked;
+  i.disabled = !!disabled;
+  return { input: i, node: el('label', { class: 'check' }, i, el('span', { text: label })) };
+}
+
+function newAccount() {
+  const user = el('input', { autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', placeholder: 'a-z, 0-9, _' });
+  const name = el('input', { autocomplete: 'off', placeholder: 'e.g. Anna' });
+  const mod = check('Moderator', false, false);
+  const body = el('div', null, field('Username', user), field('Display name', name), mod.node);
+  dialog('New account', body, [
+    { label: 'Cancel', value: null },
+    {
+      label: 'Create', kind: 'primary', onClick: async () => {
+        try {
+          const key = await Repo.createAccount(user.value, name.value, mod.input.checked);
+          loadAccounts();
+          setTimeout(() => showKey(normUser(user.value), name.value.trim(), key, false), 0);
+          return true;
+        } catch (e) { handleError(e); return false; }
+      },
+    },
+  ]);
+}
+
+function editAccount(a) {
+  const me = a.id === Repo.myId;
+  const name = el('input', { autocomplete: 'off' });
+  name.value = a.displayName;
+  const mod = check('Moderator', a.role === 'mod', me);
+  const dis = check('Disabled (can’t use the app)', a.disabled, me);
+  const body = el('div', null, el('p', { class: 'muted', text: '@' + a.id }), field('Display name', name), mod.node, dis.node);
+  dialog('Edit account', body, [
+    { label: 'Cancel', value: null },
+    {
+      label: 'Save', kind: 'primary', onClick: async () => {
+        try {
+          await Repo.updateAccount(a.id, name.value, mod.input.checked, dis.input.checked);
+          updateHeader();
+          loadAccounts();
+          return true;
+        } catch (e) { handleError(e); return false; }
+      },
+    },
+  ]);
+}
+
+async function regenerate(a) {
+  const me = a.id === Repo.myId;
+  let msg = '@' + a.id + ' will be logged out on every device until they use the new key.';
+  if (me) msg = 'That\u2019s you: this device will be logged out too. Copy the new key before closing it!';
+  if (!(await confirmDialog('New key?', msg, 'Make key', false))) return;
+  if (me) state.keepKeyOnScreen = true;
+  try {
+    const key = await Repo.regenerateKey(a.id);
+    showKey(a.id, a.displayName, key, me);
+  } catch (e) {
+    state.keepKeyOnScreen = false;
+    handleError(e);
+  }
+}
+
+function showKey(username, name, key, logoutAfter) {
+  const pretty = prettyKey(key);
+  const shareText = 'Places Map login\nUsername: ' + username + '\nOne-time key: ' + pretty;
+  const body = el('div', null,
+    el('p', { class: 'muted', text: name + ' \u00b7 @' + username }),
+    el('div', { class: 'keybox', text: pretty }),
+    el('p', { class: 'muted small', text: 'Works once. Shown only now.' }));
+  const buttons = [
+    {
+      label: 'Copy', keepOpen: true, onClick: async () => {
+        try { await navigator.clipboard.writeText(shareText); toast('Copied.'); } catch (e) { toast('Couldn’t copy. Select the key and copy it by hand.'); }
+      },
+    },
+  ];
+  if (navigator.share) {
+    buttons.push({ label: 'Share', keepOpen: true, onClick: async () => { try { await navigator.share({ text: shareText }); } catch (e) { /* cancelled */ } } });
+  }
+  buttons.push({ label: 'Done', kind: 'primary', value: true });
+  dialog('One-time key', body, buttons, { sticky: true }).then(async () => {
+    if (logoutAfter) {
+      state.keepKeyOnScreen = false;
+      await Repo.logout();
+      showLogin('Log in with your new key.');
+    } else loadAccounts();
+  });
+}
+
+// ---------------------------------------------------------------- settings
+function toggleRow(label, sub, checked, onChange) {
+  const input = el('input', { type: 'checkbox' });
+  input.checked = checked;
+  const knob = el('span', { class: 'switch' }, input, el('span', { class: 'knob' }));
+  input.addEventListener('change', () => onChange(input.checked));
+  return el('label', { class: 'set-row' },
+    el('div', { class: 'grow' }, el('div', { class: 'set-label', text: label }), sub ? el('div', { class: 'muted small', text: sub }) : null),
+    knob);
+}
+
+function openSettings() {
+  const body = el('div', null);
+  body.appendChild(el('div', { class: 'menu-who' },
+    el('div', { class: 'card-title', text: Repo.myName || '' }),
+    el('div', { class: 'muted small', text: '@' + (Repo.myId || '') + (Repo.isMod ? ' \u00b7 Moderator' : '') })));
+  body.appendChild(toggleRow('Light theme', 'Switch between light and dark.', currentTheme() === 'light', (on) => {
+    applyTheme(on ? 'light' : 'dark');
+  }));
+  dialog('Settings', body, [
+    {
+      label: 'Log out', kind: 'danger-outline', onClick: async () => {
+        const ok = await confirmDialog('Really log out?',
+          Repo.isMod ? 'You\u2019ll need a new key to log back in. If you\u2019re the only moderator, make a second moderator first.' : 'You\u2019ll need a new key to log back in.',
+          'Log out', true);
+        if (!ok) return true;
+        await Repo.logout();
+        showLogin();
+        return true;
+      },
+    },
+    { label: 'Close', kind: 'primary', value: null },
+  ]);
+}
+
+// ---------------------------------------------------------------- wire up
+async function boot() {
+  applyTheme(currentTheme());
+  $('login-form').addEventListener('submit', doLogin);
+  $('setup-form').addEventListener('submit', doSetup);
+  for (const name of ['map', 'places', 'chat', 'accounts']) $('tab-' + name).addEventListener('click', () => selectTab(name));
+  $('menu').addEventListener('click', openSettings);
+  $('fab-add').addEventListener('click', () => openAddPlace(null, false));
+  $('fab-locate').addEventListener('click', tapLocate);
+  $('places-add').addEventListener('click', () => openAddPlace(null, false));
+  for (const k of Object.keys(FILTERS)) $('filter-' + k).addEventListener('click', () => { state.filter = k; renderPlaces(); });
+  $('place-back').addEventListener('click', closePlace);
+  $('place-file').addEventListener('change', (e) => { const f = Array.from(e.target.files || []); e.target.value = ''; addPhotosToOpenPlace(f); });
+  $('add-file').addEventListener('change', (e) => { const f = Array.from(e.target.files || []); e.target.value = ''; onAddFiles(f); });
+  $('viewer-close').addEventListener('click', closeViewer);
+  $('viewer-prev').addEventListener('click', () => { state.viewerIndex--; showViewerPhoto(); });
+  $('viewer-next').addEventListener('click', () => { state.viewerIndex++; showViewerPhoto(); });
+  $('viewer-delete').addEventListener('click', deleteViewerPhoto);
+  $('accounts-new').addEventListener('click', newAccount);
+  $('chat-form').addEventListener('submit', doSend);
+  $('chat-back').addEventListener('click', closeChat);
+  $('dm-new').addEventListener('click', newDmPicker);
+  $('chat-input').addEventListener('input', (e) => autoGrow(e.target));
+  $('chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('chat-form').requestSubmit(); }
+  });
+  $('add-back').addEventListener('click', () => { $('add-sheet').hidden = true; });
+  $('add-search-form').addEventListener('submit', doAddSearch);
+  $('add-save').addEventListener('click', doAddSave);
+
+  if (!window.isSecureContext || !window.crypto || !crypto.subtle) {
+    showLogin('Open this app over https (the GitHub Pages link), not as a local file.');
+    return;
+  }
+  await Repo.loadSaved();
+  if (Repo.loggedIn && CONFIGURED) enterApp();
+  else showLogin();
+}
+
+// Installed-app support: save the app on the phone so it opens without signal.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* still works online */ });
+}
+window.addEventListener('offline', () => toast('You’re offline. Saved screens still open; changes need signal.'));
+window.addEventListener('online', () => { if (Repo.loggedIn && !$('app').hidden) loadPlaces(); });
+
+// Forms must never submit as plain HTML (e.g. before the app has started).
+document.addEventListener('submit', (e) => e.preventDefault(), true);
+
+if (window.L) boot();
+else {
+  window.addEventListener('leaflet-ready', boot, { once: true });
+  // The map library comes from a CDN; if it never arrives, say so instead of showing a dead page.
+  setTimeout(() => {
+    if (window.L) return;
+    const info = $('login-info');
+    $('login').hidden = false;
+    $('login-form').hidden = true;
+    info.hidden = false;
+    info.textContent = 'Couldn’t load the map library. Check your internet connection and reload the page.';
+  }, 12000);
+}
+</script>
+</body>
+</html>
