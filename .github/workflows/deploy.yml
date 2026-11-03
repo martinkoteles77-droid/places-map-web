@@ -1,0 +1,63 @@
+name: Deploy iPhone app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check secrets
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          if [ -z "$FIREBASE_API_KEY" ] || [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "::error::Add the FIREBASE_API_KEY and FIREBASE_PROJECT_ID secrets (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+
+      - name: Fill in Firebase settings
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          mkdir site
+          cp index.html manifest.webmanifest sw.js icon-*.png site/
+          python3 - <<'PY'
+          import os, re
+          p = "site/index.html"
+          s = open(p, encoding="utf-8").read()
+          for name, env in (("firebase-api-key", "FIREBASE_API_KEY"), ("firebase-project-id", "FIREBASE_PROJECT_ID")):
+              value = os.environ[env].strip()
+              s, n = re.subn(r'(<meta name="%s" content=")[^"]*(">)' % name, lambda m: m.group(1) + value + m.group(2), s)
+              if n != 1:
+                  raise SystemExit("Could not find the %s line in index.html" % name)
+          open(p, "w", encoding="utf-8").write(s)
+          print("Firebase settings filled in.")
+          PY
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
